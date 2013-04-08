@@ -1,9 +1,8 @@
-package org.sidoh.tiler;
+package org.sidoh.words_with_robots;
 
-import org.sidoh.io.StdinPrompts;
-import org.sidoh.tiler.data_structures.gaddag.GadDag;
+import org.sidoh.words_with_robots.util.io.StdinPrompts;
+import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 

@@ -1,9 +1,8 @@
-package org.sidoh.tiler.move_generation;
+package org.sidoh.words_with_robots.move_generation;
 
-import com.google.common.collect.Sets;
-import org.sidoh.tiler.data_structures.CollectionsHelper;
-import org.sidoh.tiler.data_structures.gaddag.GadDag;
-import org.sidoh.tiler.data_structures.gaddag.GadDagEdge;
+import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
+import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
+import org.sidoh.words_with_robots.data_structures.gaddag.GadDagEdge;
 import org.sidoh.wwf_api.game_state.Direction;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.SlotIterator;
@@ -15,8 +14,6 @@ import org.sidoh.wwf_api.types.game_state.WordOrientation;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 public class GadDagWwfMoveGenerator extends WordsWithFriendsMoveGenerator {

@@ -1,7 +1,6 @@
-package org.sidoh.tiler.data_structures.gaddag;
+package org.sidoh.words_with_robots.data_structures.gaddag;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 

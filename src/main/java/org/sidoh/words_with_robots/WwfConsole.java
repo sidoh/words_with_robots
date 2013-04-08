@@ -1,19 +1,18 @@
-package org.sidoh.tiler;
+package org.sidoh.words_with_robots;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TJSONProtocol;
-import org.sidoh.io.StdinPrompts;
-import org.sidoh.tiler.data_structures.CollectionsHelper;
-import org.sidoh.tiler.data_structures.gaddag.GadDag;
-import org.sidoh.tiler.move_generation.GadDagWwfMoveGenerator;
-import org.sidoh.tiler.move_generation.MinimaxIterativeDeepening;
-import org.sidoh.tiler.move_generation.MoveGenerator;
-import org.sidoh.tiler.move_generation.WordsWithFriendsMoveGenerator;
-import org.sidoh.tiler.move_generation.WwfMinimaxLocal;
-import org.sidoh.tiler.move_generation.eval.NewTilesEvalFunction;
-import org.sidoh.tiler.move_generation.eval.ScoreEvalFunction;
-import org.sidoh.tiler.move_generation.eval.SummingEvalFunction;
+import org.sidoh.words_with_robots.util.io.StdinPrompts;
+import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
+import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
+import org.sidoh.words_with_robots.move_generation.GadDagWwfMoveGenerator;
+import org.sidoh.words_with_robots.move_generation.MoveGenerator;
+import org.sidoh.words_with_robots.move_generation.WordsWithFriendsMoveGenerator;
+import org.sidoh.words_with_robots.move_generation.WwfMinimaxLocal;
+import org.sidoh.words_with_robots.move_generation.eval.NewTilesEvalFunction;
+import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
+import org.sidoh.words_with_robots.move_generation.eval.SummingEvalFunction;
 import org.sidoh.wwf_api.ApiProvider;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
@@ -213,7 +212,7 @@ public class WwfConsole {
     }
     else if ("setMoveGenAlgo".equals(command)) {
       String algorithm = StdinPrompts.promptForLine("Enter class name");
-      String algoClass = String.format("org.sidoh.tiler.move_generation.%s", algorithm);
+      String algoClass = String.format("org.sidoh.words_with_robots.move_generation.%s", algorithm);
       Constructor constructor = Class.forName(algoClass).getConstructor(WordsWithFriendsMoveGenerator.class);
       moveGenerator = (WordsWithFriendsMoveGenerator) constructor.newInstance(allMovesGen);
     }

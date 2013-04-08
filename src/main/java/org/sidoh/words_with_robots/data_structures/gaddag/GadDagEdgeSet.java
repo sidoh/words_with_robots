@@ -1,4 +1,4 @@
-package org.sidoh.tiler.data_structures.gaddag;
+package org.sidoh.words_with_robots.data_structures.gaddag;
 
 import java.util.*;
 

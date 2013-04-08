@@ -1,9 +1,9 @@
-package org.sidoh.tiler.move_generation;
+package org.sidoh.words_with_robots.move_generation;
 
 import com.google.common.collect.MinMaxPriorityQueue;
-import org.sidoh.tiler.data_structures.CollectionsHelper;
-import org.sidoh.tiler.move_generation.eval.EvaluationFunction;
-import org.sidoh.tiler.move_generation.eval.ScoreEvalFunction;
+import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
+import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
+import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;

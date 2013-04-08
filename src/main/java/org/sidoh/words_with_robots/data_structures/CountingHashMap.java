@@ -1,4 +1,4 @@
-package org.sidoh.tiler.data_structures;
+package org.sidoh.words_with_robots.data_structures;
 
 import java.util.HashMap;
 import java.util.Map;

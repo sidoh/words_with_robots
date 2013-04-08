@@ -1,4 +1,4 @@
-package org.sidoh.io;
+package org.sidoh.words_with_robots.util.io;
 
 import java.io.File;
 import java.util.InputMismatchException;

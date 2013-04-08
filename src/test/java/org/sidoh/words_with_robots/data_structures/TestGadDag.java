@@ -5,8 +5,8 @@ import org.jgrapht.ext.ComponentAttributeProvider;
 import org.jgrapht.ext.DOTExporter;
 import org.jgrapht.ext.EdgeNameProvider;
 import org.jgrapht.ext.VertexNameProvider;
-import org.sidoh.tiler.data_structures.gaddag.GadDag;
-import org.sidoh.tiler.data_structures.gaddag.GadDagEdge;
+import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
+import org.sidoh.words_with_robots.data_structures.gaddag.GadDagEdge;
 
 import java.io.*;
 import java.util.*;

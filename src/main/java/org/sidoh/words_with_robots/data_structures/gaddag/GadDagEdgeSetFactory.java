@@ -1,8 +1,6 @@
-package org.sidoh.tiler.data_structures.gaddag;
+package org.sidoh.words_with_robots.data_structures.gaddag;
 
 import org.jgrapht.graph.EdgeSetFactory;
-import org.sidoh.tiler.data_structures.gaddag.GadDagEdge;
-import org.sidoh.tiler.data_structures.gaddag.GadDagEdgeSet;
 
 import java.util.Set;
 

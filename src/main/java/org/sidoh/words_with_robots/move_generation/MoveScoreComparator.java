@@ -1,6 +1,6 @@
-package org.sidoh.tiler.move_generation;
+package org.sidoh.words_with_robots.move_generation;
 
-import org.sidoh.tiler.move_generation.eval.EvaluationFunction;
+import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.types.api.GameState;
 

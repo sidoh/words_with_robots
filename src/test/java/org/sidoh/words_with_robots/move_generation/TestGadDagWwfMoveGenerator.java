@@ -1,8 +1,6 @@
 package org.sidoh.words_with_robots.move_generation;
 
-import org.sidoh.tiler.data_structures.gaddag.GadDag;
-import org.sidoh.tiler.move_generation.GadDagWwfMoveGenerator;
-import org.sidoh.tiler.move_generation.WordsWithFriendsMoveGenerator;
+import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
 import org.sidoh.words_with_robots.WordsWithRobotsTestCase;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;

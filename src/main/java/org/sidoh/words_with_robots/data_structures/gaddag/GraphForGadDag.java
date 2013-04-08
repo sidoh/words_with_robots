@@ -1,4 +1,4 @@
-package org.sidoh.tiler.data_structures.gaddag;
+package org.sidoh.words_with_robots.data_structures.gaddag;
 
 /* ==========================================
  * JGraphT : a free Java graph-theory library
@@ -53,9 +53,7 @@ import java.io.*;
 import java.util.*;
 
 import org.jgrapht.*;
-import org.jgrapht.graph.AbstractBaseGraph;
 import org.jgrapht.graph.AbstractGraph;
-import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.EdgeSetFactory;
 import org.jgrapht.util.*;
 

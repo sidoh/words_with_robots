@@ -1,6 +1,6 @@
-package org.sidoh.tiler.move_generation;
+package org.sidoh.words_with_robots.move_generation;
 
-import org.sidoh.tiler.move_generation.eval.EvaluationFunction;
+import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.TileBuilder;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
@@ -11,7 +11,6 @@ import org.sidoh.wwf_api.types.game_state.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
