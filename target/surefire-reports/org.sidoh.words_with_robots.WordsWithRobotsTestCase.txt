@@ -1,0 +1,9 @@
+-------------------------------------------------------------------------------
+Test set: org.sidoh.words_with_robots.WordsWithRobotsTestCase
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.002 sec <<< FAILURE!
+warning(junit.framework.TestSuite$1)  Time elapsed: 0.001 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: No tests found in org.sidoh.words_with_robots.WordsWithRobotsTestCase
+	at junit.framework.Assert.fail(Assert.java:47)
+	at junit.framework.TestSuite$1.runTest(TestSuite.java:97)
+

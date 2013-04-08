@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: org.sidoh.words_with_robots.move_generation.TestWwfMinimaxLocal
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.175 sec
