@@ -68,7 +68,7 @@ public class MinimaxIterativeDeepening extends WordsWithFriendsMoveGenerator {
     }
 
     public Player getOther() {
-      return new Player(players, ( (selected + 1) % 2), !isMin());
+      return other;
     }
   }
 
