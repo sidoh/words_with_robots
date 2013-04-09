@@ -13,7 +13,9 @@ import org.sidoh.words_with_robots.move_generation.WwfMinimaxLocal;
 import org.sidoh.words_with_robots.move_generation.eval.NewTilesEvalFunction;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 import org.sidoh.words_with_robots.move_generation.eval.SummingEvalFunction;
+import org.sidoh.wwf_api.AccessTokenRetriever;
 import org.sidoh.wwf_api.ApiProvider;
+import org.sidoh.wwf_api.StatefulApiProvider;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
@@ -27,14 +29,19 @@ import org.sidoh.wwf_api.types.api.User;
 import org.sidoh.wwf_api.types.game_state.Rack;
 import org.sidoh.wwf_api.types.game_state.Tile;
 
+import java.io.Console;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
 public class WwfConsole {
   static String authToken;
@@ -43,12 +50,12 @@ public class WwfConsole {
     = new GadDagWwfMoveGenerator(gaddag);
   static WordsWithFriendsMoveGenerator moveGenerator
     = new WwfMinimaxLocal(allMovesGen);
-  static final ApiProvider api = new ApiProvider();
+  static StatefulApiProvider api;
   static final GameStateHelper stateHelper = new GameStateHelper();
 
   public static void handleGameSelection(User player, GameMeta meta) {
     while (true) {
-      GameState state = api.getGameState(authToken, meta.getId());
+      GameState state = api.getGameState(meta.getId());
       WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
       printScores(state);
@@ -92,7 +99,7 @@ public class WwfConsole {
         System.out.println(board);
 
         if (player.getId() == state.getMeta().getCurrentMoveUserId()) {
-          List<String> dictionaryResponse = api.dictionaryLookup(authToken, bestMove.getResult().getResultingWords());
+          List<String> dictionaryResponse = api.dictionaryLookup(bestMove.getResult().getResultingWords());
 
           if ( dictionaryResponse.size() != 0 ) {
             throw new RuntimeException("generated a move with words that aren't in the WWF dictionary. failed words are: " + dictionaryResponse);
@@ -100,7 +107,7 @@ public class WwfConsole {
 
           String response = StdinPrompts.promptForLine("accept move? (yes/no)");
           if ("yes".equals(response)) {
-            api.makeMove(authToken, state, stateHelper.createMoveSubmissionFromPlay(bestMove));
+            api.makeMove(state, stateHelper.createMoveSubmissionFromPlay(bestMove));
           }
         }
         else {
@@ -109,7 +116,7 @@ public class WwfConsole {
       }
       else if ("pass".equals(command)) {
         if (player.getId() == state.getMeta().getCurrentMoveUserId()) {
-          api.makeMove(authToken, state, stateHelper.createMoveSubmission(MoveType.PASS));
+          api.makeMove(state, stateHelper.createMoveSubmission(MoveType.PASS));
         }
         else {
           System.out.println("can't pass because it's not your turn.");
@@ -118,10 +125,10 @@ public class WwfConsole {
       // You can still resign / send a GAME_OVER move even if it's not your turn. It'll result in the game ending,
       // and unless it is your turn, the client will suggest your opponent beat you, even if your score is higher.
       else if ("resign".equals(command)) {
-        api.makeMove(authToken, state, stateHelper.createMoveSubmission(MoveType.RESIGN));
+        api.makeMove(state, stateHelper.createMoveSubmission(MoveType.RESIGN));
       }
       else if ("sendEndGame".equals(command)) {
-        api.makeMove(authToken, state, stateHelper.createMoveSubmission(MoveType.GAME_OVER));
+        api.makeMove(state, stateHelper.createMoveSubmission(MoveType.GAME_OVER));
       }
       else if ("chat".equals(command)) {
         printChats(state);
@@ -130,11 +137,11 @@ public class WwfConsole {
         String chat = StdinPrompts.promptForLine("enter new chat message (blank to cancel)");
 
         if (! chat.isEmpty()) {
-          api.submitChatMessage(authToken, state.getId(), chat);
+          api.submitChatMessage(state.getId(), chat);
         }
 
         if (state.getMeta().getUnreadChatIdsSize() > 0) {
-          api.getUnreadChats(authToken, state.getId());
+          api.getUnreadChats(state.getId());
         }
       }
       else if ("printGameState".equals(command)) {
@@ -157,7 +164,7 @@ public class WwfConsole {
 
   public static void handleListCurrentGames() {
     while (true) {
-      GameIndex gameIndex = api.getGameIndex(authToken);
+      GameIndex gameIndex = api.getGameIndex();
       User player = gameIndex.getUser();
       int i = 0;
 
@@ -179,7 +186,7 @@ public class WwfConsole {
   }
 
   public static void handleCommand() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException {
-    String[] validCommands = { "index", "listUsers", "createRandom", "create", "exit", "setMoveGenAlgo" };
+    String[] validCommands = { "index", "listUsers", "createRandom", "create", "exit", "setMoveGenAlgo", "dictLookup" };
     String command = StdinPrompts.promptForLine("Enter command (" + CollectionsHelper.join(validCommands) + ")");
 
     if ("index".equals(command)) {
@@ -189,7 +196,7 @@ public class WwfConsole {
       System.exit(0);
     }
     else if ("listUsers".equals(command)) {
-      GameIndex index = api.getGameIndex(authToken);
+      GameIndex index = api.getGameIndex();
 
       Set<User> allUsers = new HashSet<User>();
       for (GameMeta meta : index.getGames()) {
@@ -203,18 +210,24 @@ public class WwfConsole {
       }
     }
     else if ("createRandom".equals(command)) {
-      api.createRandomGame(authToken);
+      api.createRandomGame();
     }
     else if ("create".equals(command)) {
       long zyngaId = StdinPrompts.promptForLong("enter zynga user id");
 
-      api.createZyngaGame(authToken, zyngaId);
+      api.createZyngaGame(zyngaId);
     }
     else if ("setMoveGenAlgo".equals(command)) {
       String algorithm = StdinPrompts.promptForLine("Enter class name");
       String algoClass = String.format("org.sidoh.words_with_robots.move_generation.%s", algorithm);
       Constructor constructor = Class.forName(algoClass).getConstructor(WordsWithFriendsMoveGenerator.class);
       moveGenerator = (WordsWithFriendsMoveGenerator) constructor.newInstance(allMovesGen);
+    }
+    else if ("dictLookup".equals(command)) {
+      String[] words = StdinPrompts.promptForLine("Enter words (separated by commas)").split(",");
+      List<String> response = api.dictionaryLookup(Arrays.asList(words));
+
+      System.out.println("Words not in dictionary: " + response);
     }
     else {
       System.out.println("invalid command.");
@@ -298,10 +311,20 @@ public class WwfConsole {
   }
 
   public static void main(String[] args) throws IOException {
-    authToken = args[0];
-    final Reader dictionary = new FileReader(args[1]);
+    Reader dictionary;
 
+    authToken = new AccessTokenRetriever().promptForAccessToken();
+
+    if ( args.length > 0 ) {
+      dictionary = new FileReader(args[0]);
+    }
+    else {
+      InputStream resource = ClassLoader.getSystemResourceAsStream("wwf-dictionary.gz");
+      resource = new GZIPInputStream(resource);
+      dictionary = new InputStreamReader(resource);
+    }
     gaddag.loadDictionary(dictionary);
+    api = new StatefulApiProvider(authToken);
 
     while (true) {
       try {

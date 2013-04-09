@@ -29,6 +29,7 @@ public class MinimaxIterativeDeepening extends WordsWithFriendsMoveGenerator {
     private final long[] players;
     private final int selected;
     private final boolean isMin;
+    private final Player other;
 
     public Player(long uid1, long uid2, long selected, boolean isMin) {
       this( new long[] { uid1, uid2 },
@@ -40,6 +41,14 @@ public class MinimaxIterativeDeepening extends WordsWithFriendsMoveGenerator {
       this.players = uids;
       this.selected = selected;
       this.isMin = isMin;
+      this.other = new Player(this);
+    }
+
+    private Player(Player other) {
+      this.players = other.players;
+      this.selected = other.selected;
+      this.isMin = !other.isMin;
+      this.other = other;
     }
 
     public boolean isMin() {
