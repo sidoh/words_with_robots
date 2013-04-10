@@ -80,8 +80,9 @@ public class WwfConsole {
         Rack rack = stateHelper.buildRack(state.getMeta().getCurrentMoveUserId(), state);
         Move bestMove = null;
         EvaluationFunction defaultEvalFunction = new SummingEvalFunction(
-          new ScoreEvalFunction(),
-          new NewTilesEvalFunction());
+          new ScoreEvalFunction()
+//          , new NewTilesEvalFunction()
+        );
 
         MoveGeneratorParams params = new MoveGeneratorParams()
           .set(WwfMoveGeneratorParamKey.GAME_STATE, state)
