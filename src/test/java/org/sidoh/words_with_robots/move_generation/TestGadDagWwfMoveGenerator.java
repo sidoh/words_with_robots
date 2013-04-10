@@ -11,6 +11,9 @@ import org.sidoh.wwf_api.types.game_state.Rack;
 import org.sidoh.wwf_api.types.game_state.WordOrientation;
 
 public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
+  private static final MoveGenerator.MoveGeneratorParams params = new MoveGenerator.MoveGeneratorParams()
+    .set(WordsWithFriendsMoveGenerator.WwfMoveGeneratorParam.GAME_STATE, null);
+
   /**
    *
    *           HADOOPY
@@ -34,7 +37,7 @@ public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
 
     playWord(board, 7, 7, "HADOOPY", WordOrientation.HORIZONTAL, true);
 
-    Move.Result result = board.move(gen.generateMove(rack, board, WordsWithFriendsMoveGenerator.defaultParams()));
+    Move.Result result = board.move(gen.generateMove(rack, board, params));
   }
 
   public void testDoubleBlank() {
@@ -49,7 +52,7 @@ public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
 
     playWord(board, 7, 7, "AT", WordOrientation.HORIZONTAL, true);
 
-    Move move = gen.generateMove(rack, board, WordsWithFriendsMoveGenerator.defaultParams());
+    Move move = gen.generateMove(rack, board, params);
   }
 
   public void testBlank() {
@@ -65,7 +68,7 @@ public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
 
     playWord(board, 7, 7, "TOOT", WordOrientation.HORIZONTAL, true);
 
-    Move.Result result = board.move(gen.generateMove(rack, board, WordsWithFriendsMoveGenerator.defaultParams()));
+    Move.Result result = board.move(gen.generateMove(rack, board, params));
 
     assertEquals(1, result.getResultingWords().size());
     assertEquals("FOOT", result.getResultingWords().get(0));
@@ -81,7 +84,7 @@ public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
     Rack rack = buildRack("BORDING");
 
     playWord(board, 7, 7, "BATTY", WordOrientation.HORIZONTAL, true);
-    Move move = gen.generateMove(rack, board, WordsWithFriendsMoveGenerator.defaultParams());
+    Move move = gen.generateMove(rack, board, params);
 
     assertNotNull("it should generate a move", move);
   }
@@ -109,7 +112,7 @@ public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
 
     Rack rack = buildRack("AAAAAAA");
 
-    Move.Result result = board.move(gen.generateMove(rack, board, WordsWithFriendsMoveGenerator.defaultParams()));
+    Move.Result result = board.move(gen.generateMove(rack, board, params));
 
     assertEquals("score should match", 5, result.getScore());
     assertEquals("words should match", 2, result.getResultingWords().size());
@@ -128,7 +131,7 @@ public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
 
     Rack rack = buildRack("LQIIINR");
 
-    Move.Result result = board.move(gen.generateMove(rack, board, WordsWithFriendsMoveGenerator.defaultParams()));
+    Move.Result result = board.move(gen.generateMove(rack, board, params));
   }
 
   public void testInitMove() {
@@ -142,7 +145,7 @@ public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
     GadDagWwfMoveGenerator gen = new GadDagWwfMoveGenerator(gaddag);
     Rack rack = buildRack("QUEENF");
 
-    Move move = gen.generateMove(rack, board, WordsWithFriendsMoveGenerator.defaultParams());
+    Move move = gen.generateMove(rack, board, params);
     board.move(move);
 
     assertNotNull("should play on center square", board.getSlot(7,7).getTile());
@@ -165,7 +168,7 @@ public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
 
     Rack rack = buildRack("VOID");
 
-    assertResultEquals(90, board.move(gen.generateMove(rack, board, WordsWithFriendsMoveGenerator.defaultParams())));
+    assertResultEquals(90, board.move(gen.generateMove(rack, board, params)));
   }
 
   protected static void assertBestMoveGenerated(GameState state, WordsWithFriendsMoveGenerator moveGen) {
@@ -176,7 +179,7 @@ public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
 
     for (MoveData move : state.getAllMoves()) {
       Rack playerRack = stateHelper.buildRack(player1.getId(), state);
-      Move generatedMove = moveGen.generateMove(playerRack, board, WordsWithFriendsMoveGenerator.defaultParams());
+      Move generatedMove = moveGen.generateMove(playerRack, board);
 
       assertTrue("move made should be worth no more than the generated move",
         move.getPoints() <= generatedMove.getResult().getScore());

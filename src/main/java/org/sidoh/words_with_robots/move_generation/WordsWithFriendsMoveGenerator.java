@@ -1,6 +1,7 @@
 package org.sidoh.words_with_robots.move_generation;
 
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
+import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.TileBuilder;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
@@ -18,56 +19,66 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
 public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsWithFriendsBoard> {
   private static final Logger LOG = LoggerFactory.getLogger(WordsWithFriendsMoveGenerator.class);
 
-  public static class Params extends MoveGenerator.Params {
-    private final GameState gameState;
-    private Integer defaultThreshold;
-    private Move opMove;
+  public enum WwfMoveGeneratorParam implements MoveGeneratorParamKey {
+    /**
+     * The evaluation function used to compare moves. By default, we consider only the number of
+     * points each move is worth.
+     */
+    EVAL_FUNCTION(new ScoreEvalFunction()),
 
-    public Params(GameState state) {
-      this.gameState = state;
-      this.defaultThreshold = Integer.MAX_VALUE;
+    /**
+     * When this is set, allows execution to end early when a move with a greater diff than this
+     * value is found. Defaults to Integer.MAX_VALUE, which means we never exit early.
+     */
+    DEFAULT_DIFF_THRESHOLD(Integer.MAX_VALUE),
+
+    /**
+     * This has no use externally. It's used to pass state between recursive calls.
+     */
+    BEST_OPPONENT_MOVE(null),
+
+    /**
+     * REQUIRED PARAM! The GameState for the corresponding board.
+     */
+    GAME_STATE;
+
+    private final Object defaultValue;
+    private final boolean required;
+
+    private WwfMoveGeneratorParam(Object defaultValue) {
+      this.defaultValue = defaultValue;
+      this.required = false;
     }
 
-    public GameState getGameState() {
-      return gameState;
+    private WwfMoveGeneratorParam() {
+      this.defaultValue = null;
+      this.required = true;
     }
 
-    public Integer getDefaultThreshold() {
-      return defaultThreshold;
-    }
-
-    public Params setDefaultThreshold(int value) {
-      this.defaultThreshold = value;
-      return this;
-    }
-
-    public Params setBestOpMove(Move opMove) {
-      this.opMove = opMove;
-      return this;
-    }
-
-    public Move getOpMove() {
-      return opMove;
+    @Override
+    public Object getDefaultValue() {
+      if ( !required ) {
+        return defaultValue;
+      }
+      else {
+        throw new RuntimeException("Param: " + this + " is required!");
+      }
     }
   }
 
   @Override
-  public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGenerator.Params params) {
-    if (! (params instanceof Params)) {
-      throw new IllegalArgumentException("invalid params");
-    }
-
-    EvaluationFunction evalFn = params.getEvalFunction();
-    GameState state = ((Params)params).getGameState();
+  public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
+    EvaluationFunction evalFn = (EvaluationFunction) params.get(WwfMoveGeneratorParam.EVAL_FUNCTION);
+    GameState state = (GameState)params.get(WwfMoveGeneratorParam.GAME_STATE);
     Move bestMove = null;
     double bestScore = 0;
-
 
     for (Move move : generateAllPossibleMoves(baseRack, board)) {
       double score = evalFn.score(move, state);
@@ -83,6 +94,13 @@ public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsW
     return bestMove;
   }
 
+  /**
+   * Generates all possible moves for a given board and rack
+   *
+   * @param baseRack
+   * @param board
+   * @return
+   */
   public Iterable<Move> generateAllPossibleMoves(final Rack baseRack, final WordsWithFriendsBoard board) {
     // If there have been no moves, then only valid to play on (7, 7).
     if ( ! board.hasTiles() ) {
@@ -228,6 +246,11 @@ public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsW
    */
   protected abstract boolean isWord(String word);
 
+  /**
+   * Rather than sticking all possible moves into memory, this allows the consumer to iterate over possible moves.
+   * It buffers all possible moves for a single slot, and postpones generating them for later slots.
+   *
+   */
   protected class AllMovesIterator implements Iterator<Move> {
     private final Set<Rack> racks;
     private WordsWithFriendsBoard board;
@@ -279,6 +302,10 @@ public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsW
       throw new UnsupportedOperationException("remove isn't supported");
     }
 
+    /**
+     * Fill the possible moves queue with moves if possible.
+     *
+     */
     private void fillMoves() {
       while ( remainingMoves.isEmpty() && nextSlot < indexBound ) {
         int row = WordsWithFriendsBoard.getRowFromIndex(nextSlot);
@@ -289,6 +316,13 @@ public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsW
       }
     }
 
+    /**
+     * Generate all possible moves for a given slot.
+     *
+     * @param row
+     * @param col
+     * @return
+     */
     private Set<Move> getAllMoves(int row, int col) {
       Set<Move> mergedMoves = new HashSet<Move>();
 
@@ -307,9 +341,5 @@ public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsW
 
       return mergedMoves;
     }
-  }
-
-  public static Params defaultParams() {
-    return new Params(null);
   }
 }

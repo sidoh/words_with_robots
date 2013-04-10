@@ -3,6 +3,7 @@ package org.sidoh.words_with_robots;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TJSONProtocol;
+import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
 import org.sidoh.words_with_robots.util.io.StdinPrompts;
 import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
@@ -78,11 +79,13 @@ public class WwfConsole {
       else if ("play".equals(command)) {
         Rack rack = stateHelper.buildRack(state.getMeta().getCurrentMoveUserId(), state);
         Move bestMove = null;
-        MoveGenerator.Params params = new WwfMinimaxLocal.Params(state)
-          .setEvalFunction(new SummingEvalFunction(
-            new ScoreEvalFunction(),
-            new NewTilesEvalFunction()
-          ));
+        EvaluationFunction defaultEvalFunction = new SummingEvalFunction(
+          new ScoreEvalFunction(),
+          new NewTilesEvalFunction());
+
+        MoveGenerator.MoveGeneratorParams params = new MoveGenerator.MoveGeneratorParams()
+          .set(WordsWithFriendsMoveGenerator.WwfMoveGeneratorParam.GAME_STATE, state)
+          .set(WordsWithFriendsMoveGenerator.WwfMoveGeneratorParam.EVAL_FUNCTION, defaultEvalFunction);
 
         bestMove = moveGenerator.generateMove(rack, board, params);
 

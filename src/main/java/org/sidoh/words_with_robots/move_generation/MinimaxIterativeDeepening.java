@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class MinimaxIterativeDeepening extends WordsWithFriendsMoveGenerator {
@@ -77,16 +78,8 @@ public class MinimaxIterativeDeepening extends WordsWithFriendsMoveGenerator {
   }
 
   @Override
-  public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGenerator.Params _params) {
-    Move bestMove = null;
-    double bestScore = Double.NEGATIVE_INFINITY;
-
-    if ( ! (_params instanceof Params ) ) {
-      throw new IllegalArgumentException("need to supply game state");
-    }
-    Params params = (Params)_params;
-
-    GameState state = params.getGameState();
+  public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
+    GameState state = (GameState) params.get(WwfMoveGeneratorParam.GAME_STATE);
     long maxPlayer = state.getMeta().getCurrentMoveUserId();
     Player max = new Player( maxPlayer, stateHelper.getOtherUser(maxPlayer, state).getId(), maxPlayer, true );
 
@@ -102,9 +95,9 @@ public class MinimaxIterativeDeepening extends WordsWithFriendsMoveGenerator {
     closure = alphaBetaSearch(closure);
 
     LOG.info("generated move had index {}, and is worth {} points. ab-search returned: {}",
-      new Object[] { closure.getReturnMoveIndex(),
-      closure.getReturnMove().getResult().getScore(),
-      closure.getReturnValue() });
+      new Object[]{closure.getReturnMoveIndex(),
+        closure.getReturnMove().getResult().getScore(),
+        closure.getReturnValue()});
 
     return closure.getReturnMove();
   }
@@ -303,7 +296,7 @@ public class MinimaxIterativeDeepening extends WordsWithFriendsMoveGenerator {
     private double alpha;
     private double beta;
     private Player player;
-    private Params params;
+    private MoveGeneratorParams params;
     private double returnValue;
     private Move returnMove;
     private int returnMoveIndex;
@@ -357,7 +350,7 @@ public class MinimaxIterativeDeepening extends WordsWithFriendsMoveGenerator {
       return player;
     }
 
-    public Params getParams() {
+    public MoveGeneratorParams getParams() {
       return params;
     }
 
@@ -432,7 +425,7 @@ public class MinimaxIterativeDeepening extends WordsWithFriendsMoveGenerator {
       return this;
     }
 
-    public AlphaBetaClosure setParams(Params params) {
+    public AlphaBetaClosure setParams(MoveGeneratorParams params) {
       this.params = params;
       return this;
     }

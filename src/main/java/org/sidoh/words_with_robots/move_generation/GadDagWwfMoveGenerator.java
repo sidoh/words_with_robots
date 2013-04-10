@@ -16,6 +16,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * A move generator that uses a GADDAG.
+ */
 public class GadDagWwfMoveGenerator extends WordsWithFriendsMoveGenerator {
   private final GadDag gaddag;
 

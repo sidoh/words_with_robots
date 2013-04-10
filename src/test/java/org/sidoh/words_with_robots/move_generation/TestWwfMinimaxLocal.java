@@ -25,7 +25,8 @@ public class TestWwfMinimaxLocal extends WordsWithRobotsTestCase {
     );
     GadDagWwfMoveGenerator baseGen = new GadDagWwfMoveGenerator(dict);
     WwfMinimaxLocal gen = new WwfMinimaxLocal(baseGen);
-    WwfMinimaxLocal.Params params = new WwfMinimaxLocal.Params( new GameState(state) );
+    MoveGenerator.MoveGeneratorParams params = new MoveGenerator.MoveGeneratorParams()
+      .set(WordsWithFriendsMoveGenerator.WwfMoveGeneratorParam.GAME_STATE, new GameState(state));
 
     playWord(board, 7, 5, "ENTOPIC", WordOrientation.HORIZONTAL, true);
     playWord(board, 8, 8, "RIF", WordOrientation.HORIZONTAL, true);
@@ -37,7 +38,7 @@ public class TestWwfMinimaxLocal extends WordsWithRobotsTestCase {
 
     System.out.println(board);
 
-    baseGen.generateMove(opRack, board, WordsWithFriendsMoveGenerator.defaultParams());
+    baseGen.generateMove(opRack, board, params);
   }
 
   public void testDanB() throws IOException, TException {
@@ -48,17 +49,18 @@ public class TestWwfMinimaxLocal extends WordsWithRobotsTestCase {
     );
     GadDagWwfMoveGenerator baseGen = new GadDagWwfMoveGenerator(dict);
     WwfMinimaxLocal gen = new WwfMinimaxLocal(baseGen);
-    WwfMinimaxLocal.Params params = new WwfMinimaxLocal.Params( new GameState(state) );
+    MoveGenerator.MoveGeneratorParams params = new MoveGenerator.MoveGeneratorParams()
+      .set(WordsWithFriendsMoveGenerator.WwfMoveGeneratorParam.GAME_STATE, state);
     WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
     Rack myRack = buildRack("BOEESZR");
     Rack opRack = buildRack("RRVFRNA");
 
     board.move(gen.generateMove(myRack, board, params));
-    Move opMove = baseGen.generateMove(opRack, board, WordsWithFriendsMoveGenerator.defaultParams());
+    Move opMove = baseGen.generateMove(opRack, board, params);
 
     assertEquals("moves should match",
       opMove,
-      params.getOpMove());
+      params.get(WordsWithFriendsMoveGenerator.WwfMoveGeneratorParam.BEST_OPPONENT_MOVE));
   }
 }

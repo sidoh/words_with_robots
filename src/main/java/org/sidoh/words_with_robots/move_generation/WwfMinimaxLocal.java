@@ -37,20 +37,11 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
     this.inner = inner;
   }
 
-  /**
-   *
-   * @param baseRack
-   * @param board
-   * @param callParams
-   * @return
-   */
   @Override
-  public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGenerator.Params callParams) {
-    Params params = (Params)callParams;
-
+  public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
     // Pull out params out of params object
-    EvaluationFunction eval = params.getEvalFunction();
-    int diffThreshold = params.getDefaultThreshold();
+    EvaluationFunction eval = (EvaluationFunction) params.get(WwfMoveGeneratorParam.EVAL_FUNCTION);
+    int diffThreshold = params.getInt(WwfMoveGeneratorParam.DEFAULT_DIFF_THRESHOLD);
 
     // Generate all possible moves given this game state
     List<Move> allMoves1 = CollectionsHelper.asList( generateAllPossibleMoves(baseRack, board) );
@@ -60,7 +51,7 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
     Move best = null;
 
     // Prepare some stuff for game state swapping
-    GameState state = params.getGameState();
+    GameState state = (GameState) params.get(WwfMoveGeneratorParam.GAME_STATE);
     User other = stateHelper.getOtherUser(state.getMeta().getCurrentMoveUserId(), state);
     Rack otherRack = stateHelper.buildRack(state.getRacks().get(other.getId()));
 
@@ -160,7 +151,7 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
       WordsWithFriendsBoard pboard = board.clone();
       pboard.move(best);
       LOG.info("best opponent move: " + bestOpMove.getResult().getResultingWords() + " (score = " + bestOp + ")");
-      params.setBestOpMove( bestOpMove );
+      params.set(WwfMoveGeneratorParam.BEST_OPPONENT_MOVE, bestOpMove);
     }
 
     if ( best != null ) {
