@@ -3,6 +3,8 @@ package org.sidoh.words_with_robots.move_generation;
 import com.google.common.collect.MinMaxPriorityQueue;
 import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
+import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
@@ -14,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class MinimaxIterativeDeepening extends WordsWithFriendsMoveGenerator {
@@ -79,7 +80,7 @@ public class MinimaxIterativeDeepening extends WordsWithFriendsMoveGenerator {
 
   @Override
   public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
-    GameState state = (GameState) params.get(WwfMoveGeneratorParam.GAME_STATE);
+    GameState state = (GameState) params.get(WwfMoveGeneratorParamKey.GAME_STATE);
     long maxPlayer = state.getMeta().getCurrentMoveUserId();
     Player max = new Player( maxPlayer, stateHelper.getOtherUser(maxPlayer, state).getId(), maxPlayer, true );
 

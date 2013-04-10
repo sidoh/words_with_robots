@@ -4,6 +4,8 @@ import org.sidoh.words_with_robots.WordsWithRobotsTestCase;
 
 import org.apache.thrift.TException;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
+import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
@@ -25,8 +27,8 @@ public class TestWwfMinimaxLocal extends WordsWithRobotsTestCase {
     );
     GadDagWwfMoveGenerator baseGen = new GadDagWwfMoveGenerator(dict);
     WwfMinimaxLocal gen = new WwfMinimaxLocal(baseGen);
-    MoveGenerator.MoveGeneratorParams params = new MoveGenerator.MoveGeneratorParams()
-      .set(WordsWithFriendsMoveGenerator.WwfMoveGeneratorParam.GAME_STATE, new GameState(state));
+    MoveGeneratorParams params = new MoveGeneratorParams()
+      .set(WwfMoveGeneratorParamKey.GAME_STATE, new GameState(state));
 
     playWord(board, 7, 5, "ENTOPIC", WordOrientation.HORIZONTAL, true);
     playWord(board, 8, 8, "RIF", WordOrientation.HORIZONTAL, true);
@@ -49,8 +51,8 @@ public class TestWwfMinimaxLocal extends WordsWithRobotsTestCase {
     );
     GadDagWwfMoveGenerator baseGen = new GadDagWwfMoveGenerator(dict);
     WwfMinimaxLocal gen = new WwfMinimaxLocal(baseGen);
-    MoveGenerator.MoveGeneratorParams params = new MoveGenerator.MoveGeneratorParams()
-      .set(WordsWithFriendsMoveGenerator.WwfMoveGeneratorParam.GAME_STATE, state);
+    MoveGeneratorParams params = new MoveGeneratorParams()
+      .set(WwfMoveGeneratorParamKey.GAME_STATE, state);
     WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
     Rack myRack = buildRack("BOEESZR");
@@ -61,6 +63,6 @@ public class TestWwfMinimaxLocal extends WordsWithRobotsTestCase {
 
     assertEquals("moves should match",
       opMove,
-      params.get(WordsWithFriendsMoveGenerator.WwfMoveGeneratorParam.BEST_OPPONENT_MOVE));
+      params.get(WwfMoveGeneratorParamKey.BEST_OPPONENT_MOVE));
   }
 }

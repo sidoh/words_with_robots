@@ -4,18 +4,18 @@ import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
+import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
 import org.sidoh.words_with_robots.util.io.StdinPrompts;
 import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
 import org.sidoh.words_with_robots.move_generation.GadDagWwfMoveGenerator;
-import org.sidoh.words_with_robots.move_generation.MoveGenerator;
 import org.sidoh.words_with_robots.move_generation.WordsWithFriendsMoveGenerator;
 import org.sidoh.words_with_robots.move_generation.WwfMinimaxLocal;
 import org.sidoh.words_with_robots.move_generation.eval.NewTilesEvalFunction;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 import org.sidoh.words_with_robots.move_generation.eval.SummingEvalFunction;
 import org.sidoh.wwf_api.AccessTokenRetriever;
-import org.sidoh.wwf_api.ApiProvider;
 import org.sidoh.wwf_api.StatefulApiProvider;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
@@ -30,7 +30,6 @@ import org.sidoh.wwf_api.types.api.User;
 import org.sidoh.wwf_api.types.game_state.Rack;
 import org.sidoh.wwf_api.types.game_state.Tile;
 
-import java.io.Console;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -83,9 +82,9 @@ public class WwfConsole {
           new ScoreEvalFunction(),
           new NewTilesEvalFunction());
 
-        MoveGenerator.MoveGeneratorParams params = new MoveGenerator.MoveGeneratorParams()
-          .set(WordsWithFriendsMoveGenerator.WwfMoveGeneratorParam.GAME_STATE, state)
-          .set(WordsWithFriendsMoveGenerator.WwfMoveGeneratorParam.EVAL_FUNCTION, defaultEvalFunction);
+        MoveGeneratorParams params = new MoveGeneratorParams()
+          .set(WwfMoveGeneratorParamKey.GAME_STATE, state)
+          .set(WwfMoveGeneratorParamKey.EVAL_FUNCTION, defaultEvalFunction);
 
         bestMove = moveGenerator.generateMove(rack, board, params);
 

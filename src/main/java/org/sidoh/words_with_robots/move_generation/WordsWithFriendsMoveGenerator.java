@@ -1,7 +1,8 @@
 package org.sidoh.words_with_robots.move_generation;
 
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
-import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
+import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.TileBuilder;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
@@ -19,64 +20,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
 public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsWithFriendsBoard> {
   private static final Logger LOG = LoggerFactory.getLogger(WordsWithFriendsMoveGenerator.class);
 
-  public enum WwfMoveGeneratorParam implements MoveGeneratorParamKey {
-    /**
-     * The evaluation function used to compare moves. By default, we consider only the number of
-     * points each move is worth.
-     */
-    EVAL_FUNCTION(new ScoreEvalFunction()),
-
-    /**
-     * When this is set, allows execution to end early when a move with a greater diff than this
-     * value is found. Defaults to Integer.MAX_VALUE, which means we never exit early.
-     */
-    DEFAULT_DIFF_THRESHOLD(Integer.MAX_VALUE),
-
-    /**
-     * This has no use externally. It's used to pass state between recursive calls.
-     */
-    BEST_OPPONENT_MOVE(null),
-
-    /**
-     * REQUIRED PARAM! The GameState for the corresponding board.
-     */
-    GAME_STATE;
-
-    private final Object defaultValue;
-    private final boolean required;
-
-    private WwfMoveGeneratorParam(Object defaultValue) {
-      this.defaultValue = defaultValue;
-      this.required = false;
-    }
-
-    private WwfMoveGeneratorParam() {
-      this.defaultValue = null;
-      this.required = true;
-    }
-
-    @Override
-    public Object getDefaultValue() {
-      if ( !required ) {
-        return defaultValue;
-      }
-      else {
-        throw new RuntimeException("Param: " + this + " is required!");
-      }
-    }
-  }
-
   @Override
   public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
-    EvaluationFunction evalFn = (EvaluationFunction) params.get(WwfMoveGeneratorParam.EVAL_FUNCTION);
-    GameState state = (GameState)params.get(WwfMoveGeneratorParam.GAME_STATE);
+    EvaluationFunction evalFn = (EvaluationFunction) params.get(WwfMoveGeneratorParamKey.EVAL_FUNCTION);
+    GameState state = (GameState)params.get(WwfMoveGeneratorParamKey.GAME_STATE);
     Move bestMove = null;
     double bestScore = 0;
 

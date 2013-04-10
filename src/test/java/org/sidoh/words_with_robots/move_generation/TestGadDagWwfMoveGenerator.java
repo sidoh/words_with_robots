@@ -2,6 +2,8 @@ package org.sidoh.words_with_robots.move_generation;
 
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
 import org.sidoh.words_with_robots.WordsWithRobotsTestCase;
+import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
@@ -11,8 +13,8 @@ import org.sidoh.wwf_api.types.game_state.Rack;
 import org.sidoh.wwf_api.types.game_state.WordOrientation;
 
 public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
-  private static final MoveGenerator.MoveGeneratorParams params = new MoveGenerator.MoveGeneratorParams()
-    .set(WordsWithFriendsMoveGenerator.WwfMoveGeneratorParam.GAME_STATE, null);
+  private static final MoveGeneratorParams params = new MoveGeneratorParams()
+    .set(WwfMoveGeneratorParamKey.GAME_STATE, null);
 
   /**
    *

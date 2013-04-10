@@ -4,6 +4,8 @@ import com.google.common.collect.MinMaxPriorityQueue;
 import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
+import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
@@ -40,8 +42,8 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
   @Override
   public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
     // Pull out params out of params object
-    EvaluationFunction eval = (EvaluationFunction) params.get(WwfMoveGeneratorParam.EVAL_FUNCTION);
-    int diffThreshold = params.getInt(WwfMoveGeneratorParam.DEFAULT_DIFF_THRESHOLD);
+    EvaluationFunction eval = (EvaluationFunction) params.get(WwfMoveGeneratorParamKey.EVAL_FUNCTION);
+    int diffThreshold = params.getInt(WwfMoveGeneratorParamKey.DEFAULT_DIFF_THRESHOLD);
 
     // Generate all possible moves given this game state
     List<Move> allMoves1 = CollectionsHelper.asList( generateAllPossibleMoves(baseRack, board) );
@@ -51,7 +53,7 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
     Move best = null;
 
     // Prepare some stuff for game state swapping
-    GameState state = (GameState) params.get(WwfMoveGeneratorParam.GAME_STATE);
+    GameState state = (GameState) params.get(WwfMoveGeneratorParamKey.GAME_STATE);
     User other = stateHelper.getOtherUser(state.getMeta().getCurrentMoveUserId(), state);
     Rack otherRack = stateHelper.buildRack(state.getRacks().get(other.getId()));
 
@@ -151,7 +153,7 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
       WordsWithFriendsBoard pboard = board.clone();
       pboard.move(best);
       LOG.info("best opponent move: " + bestOpMove.getResult().getResultingWords() + " (score = " + bestOp + ")");
-      params.set(WwfMoveGeneratorParam.BEST_OPPONENT_MOVE, bestOpMove);
+      params.set(WwfMoveGeneratorParamKey.BEST_OPPONENT_MOVE, bestOpMove);
     }
 
     if ( best != null ) {
