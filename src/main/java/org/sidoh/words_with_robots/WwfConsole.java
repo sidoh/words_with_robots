@@ -3,6 +3,7 @@ package org.sidoh.words_with_robots;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TJSONProtocol;
+import org.sidoh.words_with_robots.move_generation.IterativeDeepeningMoveGenerator;
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
 import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
@@ -49,7 +50,7 @@ public class WwfConsole {
   static final WordsWithFriendsMoveGenerator allMovesGen
     = new GadDagWwfMoveGenerator(gaddag);
   static WordsWithFriendsMoveGenerator moveGenerator
-    = new WwfMinimaxLocal(allMovesGen);
+    = new IterativeDeepeningMoveGenerator(allMovesGen);
   static StatefulApiProvider api;
   static final GameStateHelper stateHelper = new GameStateHelper();
 

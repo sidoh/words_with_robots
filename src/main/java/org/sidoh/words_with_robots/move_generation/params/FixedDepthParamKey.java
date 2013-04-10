@@ -27,7 +27,14 @@ public enum FixedDepthParamKey implements MoveGeneratorParamKey {
    * time, but comes at the cost of loss of information (meaning potentially sub-optimal moves will
    * be generated).
    */
-  BRANCHING_FACTOR_LIMIT(20);
+  BRANCHING_FACTOR_LIMIT(20),
+
+  /**
+   * FixedDepthMoveGenerator will look for this signal at every node in the search tree. If it's set
+   * to true, it will stop execution and return the best value it's found so far. Use this to stop
+   * execution early.
+   */
+  KILL_SIGNAL(false);
 
   private final Object defaultValue;
   private FixedDepthParamKey(Object defaultValue) {

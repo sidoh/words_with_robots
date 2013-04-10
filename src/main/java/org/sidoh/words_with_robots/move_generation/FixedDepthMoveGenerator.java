@@ -97,7 +97,8 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
       .setState( state )
       .setBoard( board )
       .setRack( stateHelper.buildRack(max.getUserId(), state) )
-      .setRemainingDepth( 4 );
+      .setParams(params)
+      .setRemainingDepth( params.getInt(FixedDepthParamKey.MAXIMUM_DEPTH) );
 
     closure = alphaBetaSearch(closure);
 
@@ -118,6 +119,10 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
 
       return closure.setReturnValue( score );
     }
+    // If we get the kill signal, ignore this branch.
+    else if ( closure.getParams().getBoolean(FixedDepthParamKey.KILL_SIGNAL) ) {
+      return closure;
+    }
 
     double alpha = closure.getAlpha();
     double beta = closure.getBeta();
@@ -135,7 +140,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
 
         // Will need to check if this is still a legal move.
         if ( isValidMove(result) ) {
-          LOG.info("Move cache hit at level {}. Move = {}", closure.getRemainingDepth(), closure.getReturnMove().getResult().getResultingWords());
+          LOG.debug("Move cache hit at level {}. Move = {}", closure.getRemainingDepth(), closure.getReturnMove().getResult().getResultingWords());
 
           double cAlpha = cachedMove.getAlpha();
           double cBeta = cachedMove.getBeta();
@@ -157,7 +162,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
       .maximumSize(params.getInt(FixedDepthParamKey.MOVE_CACHE_SIZE))
       .create();
 
-    LOG.info("At depth {}, considering {} possible moves", closure.getRemainingDepth(), moves.size());
+    LOG.debug("At depth {}, considering {} possible moves", closure.getRemainingDepth(), moves.size());
 
     int movesConsidered = 0;
 
@@ -170,7 +175,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
 
       // Stop considering moves if this one sucks and we've already considered better moves.
       if ( move.getResult().getScore() < params.getInt(FixedDepthParamKey.MIN_SCORE) && movesConsidered > 0 ) {
-        LOG.info("stop considering moves after seeing one with score {}", move.getResult().getScore());
+        LOG.debug("stop considering moves after seeing one with score {}", move.getResult().getScore());
         break;
       }
 
@@ -179,7 +184,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
         break;
       }
 
-      LOG.info("considering move with score {}", move.getResult().getScore());
+      LOG.debug("considering move with score {}", move.getResult().getScore());
 
       // Generate new game state stuff
       GameState updatedState = stateHelper.applyMove(closure.getState(), move);
@@ -241,7 +246,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
         .setReturnMove( null );
     }
 
-    LOG.info("best in this branch: {}", (player.isMax() ? alpha : beta));
+    LOG.debug("best in this branch: {}", (player.isMax() ? alpha : beta));
 
     return returnClosure
       .setAlpha( alpha )
