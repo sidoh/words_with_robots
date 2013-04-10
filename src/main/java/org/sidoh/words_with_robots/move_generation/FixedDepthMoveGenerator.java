@@ -102,8 +102,10 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
 
     closure = alphaBetaSearch(closure);
 
-    LOG.info("generated move had index {}, and is worth {} points. ab-search returned: {}",
-      new Object[]{closure.getReturnMoveIndex(),
+    LOG.info("generated move: {}. It had index {}, and is worth {} points. ab-search returned: {}",
+      new Object[]{
+        closure.getReturnMove().getResult().getResultingWords(),
+        closure.getReturnMoveIndex(),
         closure.getReturnMove().getResult().getScore(),
         closure.getReturnValue()});
 
