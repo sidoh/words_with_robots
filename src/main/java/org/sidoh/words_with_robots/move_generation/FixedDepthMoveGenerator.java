@@ -4,6 +4,7 @@ import com.google.common.collect.MinMaxPriorityQueue;
 import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 import org.sidoh.words_with_robots.move_generation.params.FixedDepthParamKey;
+import org.sidoh.words_with_robots.move_generation.params.KillSignalBeacon;
 import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
@@ -109,6 +110,10 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
         closure.getReturnMove().getResult().getScore(),
         closure.getReturnValue()});
 
+    // Signal to caller that execution has expired (in the case that this is run in a thread)
+    KillSignalBeacon beacon = (KillSignalBeacon) closure.getParams().get(FixedDepthParamKey.KILL_SIGNAL);
+    beacon.kill();
+
     return closure.getReturnMove();
   }
 
@@ -121,8 +126,11 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
 
       return closure.setReturnValue( score );
     }
-    // If we get the kill signal, ignore this branch.
-    else if ( closure.getParams().getBoolean(FixedDepthParamKey.KILL_SIGNAL) ) {
+
+    KillSignalBeacon killBeacon = (KillSignalBeacon) closure.getParams().get(FixedDepthParamKey.KILL_SIGNAL);
+
+    // If we get the kill signal, halt execution.
+    if ( killBeacon.shouldKill() ) {
       return closure;
     }
 

@@ -34,7 +34,7 @@ public enum FixedDepthParamKey implements MoveGeneratorParamKey {
    * to true, it will stop execution and return the best value it's found so far. Use this to stop
    * execution early.
    */
-  KILL_SIGNAL(false);
+  KILL_SIGNAL(new KillSignalBeacon());
 
   private final Object defaultValue;
   private FixedDepthParamKey(Object defaultValue) {

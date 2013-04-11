@@ -2,6 +2,7 @@ package org.sidoh.words_with_robots.move_generation;
 
 import org.sidoh.words_with_robots.move_generation.params.FixedDepthParamKey;
 import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningParamKey;
+import org.sidoh.words_with_robots.move_generation.params.KillSignalBeacon;
 import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
@@ -21,13 +22,21 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
 
   @Override
   public Move generateMove(Rack rack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
+    // Set up a kill signal so that we can stop execution when we want
+    KillSignalBeacon killBeacon = new KillSignalBeacon();
+    params.set(FixedDepthParamKey.KILL_SIGNAL, killBeacon);
+
+    // Figure out how long we're allowed to run
     long maxExecutionTime = params.getLong(IterativeDeepeningParamKey.MAX_EXECUTION_TIME_IN_MS);
     long expireTime = System.currentTimeMillis() + maxExecutionTime;
+
+    // Set up and start a producer thread
     IterativeDeepeningProducer producer = new IterativeDeepeningProducer(rack, board, params);
     Thread producerThread = new Thread(producer);
     producerThread.start();
 
-    while ( System.currentTimeMillis() < expireTime ) {
+    // Wait until execution completes or we run out of time
+    while ( killBeacon.shouldKill() && System.currentTimeMillis() < expireTime ) {
       try {
         Thread.sleep(100L);
       } catch (InterruptedException e) {
@@ -35,15 +44,16 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
       }
     }
 
-    params.set(FixedDepthParamKey.KILL_SIGNAL, true);
+    // Kill the move generator
+    killBeacon.kill();
     try {
       producerThread.join();
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
 
+    // Spit out the best move that we've found
     LOG.info("Made it to depth {}", producer.currentDepth-1);
-
     return producer.getBestMove();
   }
 
