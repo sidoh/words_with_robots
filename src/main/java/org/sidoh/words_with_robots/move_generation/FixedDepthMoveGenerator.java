@@ -110,10 +110,6 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
         closure.getReturnMove().getResult().getScore(),
         closure.getReturnValue()});
 
-    // Signal to caller that execution has expired (in the case that this is run in a thread)
-    KillSignalBeacon beacon = (KillSignalBeacon) closure.getParams().get(FixedDepthParamKey.KILL_SIGNAL);
-    beacon.kill();
-
     return closure.getReturnMove();
   }
 
@@ -127,7 +123,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
       return closure.setReturnValue( score );
     }
 
-    KillSignalBeacon killBeacon = (KillSignalBeacon) closure.getParams().get(FixedDepthParamKey.KILL_SIGNAL);
+    KillSignalBeacon killBeacon = (KillSignalBeacon) closure.getParams().get(FixedDepthParamKey.KILL_SIGNAL_BEACON);
 
     // If we get the kill signal, halt execution.
     if ( killBeacon.shouldKill() ) {

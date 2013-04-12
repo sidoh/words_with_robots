@@ -70,7 +70,7 @@
         <dependency>
             <groupId>org.sidoh</groupId>
             <artifactId>wwf_api</artifactId>
-            <version>0.2</version>
+            <version>0.3-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -115,6 +115,15 @@
         </plugins>
     </build>
 
-    <repositories></repositories>
+    <repositories>
+
+<repository>
+    <id>sonatype-oss-public</id>
+    <url>https://oss.sonatype.org/content/groups/public/</url>
+    <snapshots>
+      <enabled>true</enabled>
+    </snapshots>
+</repository>
+</repositories>
     <pluginRepositories></pluginRepositories>
 </project>

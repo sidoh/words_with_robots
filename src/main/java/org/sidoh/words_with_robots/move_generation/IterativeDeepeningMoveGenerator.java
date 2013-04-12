@@ -22,9 +22,11 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
 
   @Override
   public Move generateMove(Rack rack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
+    LOG.info("Generating move. Starting at depth 1");
+
     // Set up a kill signal so that we can stop execution when we want
     KillSignalBeacon killBeacon = new KillSignalBeacon();
-    params.set(FixedDepthParamKey.KILL_SIGNAL, killBeacon);
+    params.set(FixedDepthParamKey.KILL_SIGNAL_BEACON, killBeacon);
 
     // Figure out how long we're allowed to run
     long maxExecutionTime = params.getLong(IterativeDeepeningParamKey.MAX_EXECUTION_TIME_IN_MS);
@@ -36,7 +38,7 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
     producerThread.start();
 
     // Wait until execution completes or we run out of time
-    while ( killBeacon.shouldKill() && System.currentTimeMillis() < expireTime ) {
+    while ( System.currentTimeMillis() < expireTime ) {
       try {
         Thread.sleep(100L);
       } catch (InterruptedException e) {
@@ -83,7 +85,9 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
 
     @Override
     public void run() {
-      while ( !params.getBoolean(FixedDepthParamKey.KILL_SIGNAL) ) {
+      KillSignalBeacon beacon = (KillSignalBeacon) params.get(FixedDepthParamKey.KILL_SIGNAL_BEACON);
+      while ( !beacon.shouldKill() ) {
+        LOG.info("Moving to depth {}", currentDepth);
         params.set(FixedDepthParamKey.MAXIMUM_DEPTH, currentDepth++);
         currentBest = allMovesGenerator.generateMove(rack, board, params);
       }
