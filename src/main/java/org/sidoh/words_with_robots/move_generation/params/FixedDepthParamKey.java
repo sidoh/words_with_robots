@@ -34,7 +34,12 @@ public enum FixedDepthParamKey implements MoveGeneratorParamKey {
    * to true, it will stop execution and return the best value it's found so far. Use this to stop
    * execution early.
    */
-  KILL_SIGNAL_BEACON(new KillSignalBeacon());
+  PREEMPTION_CONTEXT(null),
+
+  /**
+   * Move generation sets this to true if a terminal state is reached
+   */
+  REACHED_TERMINAL_STATE(false);
 
   private final Object defaultValue;
   private FixedDepthParamKey(Object defaultValue) {
@@ -43,6 +48,11 @@ public enum FixedDepthParamKey implements MoveGeneratorParamKey {
 
   @Override
   public Object getDefaultValue() {
-    return defaultValue;
+    if ( this == PREEMPTION_CONTEXT ) {
+      return new PreemptionContext();
+    }
+    else {
+      return defaultValue;
+    }
   }
 }

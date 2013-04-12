@@ -17,6 +17,10 @@ public class CountingHashMap<T> extends HashMap<T, CountingHashMap.CountingInteg
     return value;
   }
 
+  public int getCount(Object key) {
+    return containsKey(key) ? get(key).getValue() : 0;
+  }
+
   public void increment(Object key) {
     get(key).increment();
   }
@@ -33,6 +37,10 @@ public class CountingHashMap<T> extends HashMap<T, CountingHashMap.CountingInteg
     }
 
     return r;
+  }
+
+  public static <T> CountingHashMap<T> create() {
+    return new CountingHashMap<T>();
   }
 
   public static final class CountingInteger {

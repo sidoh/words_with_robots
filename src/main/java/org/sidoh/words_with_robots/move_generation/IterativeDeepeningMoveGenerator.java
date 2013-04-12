@@ -4,6 +4,7 @@ import org.sidoh.words_with_robots.move_generation.params.FixedDepthParamKey;
 import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningParamKey;
 import org.sidoh.words_with_robots.move_generation.params.KillSignalBeacon;
 import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.params.PreemptionContext;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.game_state.Rack;
@@ -24,13 +25,17 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
   public Move generateMove(Rack rack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
     LOG.info("Generating move. Starting at depth 1");
 
+    // Git our preemption context, which will allow us to preempt the underlying fixed store
+    // when its minimum time to run is up
+   PreemptionContext preemptionContext = (PreemptionContext) params.get(FixedDepthParamKey.PREEMPTION_CONTEXT);
+
     // Set up a kill signal so that we can stop execution when we want
-    KillSignalBeacon killBeacon = new KillSignalBeacon();
-    params.set(FixedDepthParamKey.KILL_SIGNAL_BEACON, killBeacon);
+    PreemptionContext childPreemptionContext = new PreemptionContext();
+    MoveGeneratorParams childParams = params.clone()
+      .set(FixedDepthParamKey.PREEMPTION_CONTEXT, childPreemptionContext);
 
     // Figure out how long we're allowed to run
-    long maxExecutionTime = params.getLong(IterativeDeepeningParamKey.MAX_EXECUTION_TIME_IN_MS);
-    long expireTime = System.currentTimeMillis() + maxExecutionTime;
+    long startTime = System.currentTimeMillis();
 
     // Set up and start a producer thread
     IterativeDeepeningProducer producer = new IterativeDeepeningProducer(rack, board, params);
@@ -38,7 +43,7 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
     producerThread.start();
 
     // Wait until execution completes or we run out of time
-    while ( System.currentTimeMillis() < expireTime ) {
+    while ( !producer.isComplete() && !isExpired(startTime, preemptionContext, params) ) {
       try {
         Thread.sleep(100L);
       } catch (InterruptedException e) {
@@ -47,7 +52,7 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
     }
 
     // Kill the move generator
-    killBeacon.kill();
+    childPreemptionContext.strongPreempt();
     try {
       producerThread.join();
     } catch (InterruptedException e) {
@@ -57,6 +62,34 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
     // Spit out the best move that we've found
     LOG.info("Made it to depth {}", producer.currentDepth-1);
     return producer.getBestMove();
+  }
+
+  /**
+   * Determine whether or not execution is expired
+   *
+   * @param startTime time at which execution began
+   * @param pcontext preemption context
+   * @param params params called
+   * @return
+   */
+  protected static boolean isExpired(long startTime, PreemptionContext pcontext, MoveGeneratorParams params) {
+    long minRunTime = params.getLong(IterativeDeepeningParamKey.MIN_EXECUTION_TIME_IN_MS);
+    long maxRunTime = params.getLong(IterativeDeepeningParamKey.MAX_EXECUTION_TIME_IN_MS);
+
+    // If we're preempted strongly, we must stop execution immediately
+    if ( pcontext.getPreemptState() == PreemptionContext.State.STRONG_PREEMPT ) {
+      return true;
+    }
+
+    long expireTime;
+    if ( pcontext.getPreemptState() == PreemptionContext.State.WEAK_PREEMPT ) {
+      expireTime = startTime + minRunTime;
+    }
+    else {
+      expireTime = startTime + maxRunTime;
+    }
+
+    return System.currentTimeMillis() >= expireTime;
   }
 
   @Override
@@ -75,22 +108,37 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
     private final MoveGeneratorParams params;
     private int currentDepth;
     private Move currentBest;
+    private boolean complete;
 
     public IterativeDeepeningProducer(Rack rack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
       this.board = board;
       this.rack = rack;
       this.params = params;
       this.currentDepth = 1;
+      this.complete = false;
     }
 
     @Override
     public void run() {
-      KillSignalBeacon beacon = (KillSignalBeacon) params.get(FixedDepthParamKey.KILL_SIGNAL_BEACON);
-      while ( !beacon.shouldKill() ) {
+      PreemptionContext beacon
+        = (PreemptionContext) params.get(FixedDepthParamKey.PREEMPTION_CONTEXT);
+
+      while ( beacon.getPreemptState() == PreemptionContext.State.NOT_PREEMPTED ) {
         LOG.info("Moving to depth {}", currentDepth);
         params.set(FixedDepthParamKey.MAXIMUM_DEPTH, currentDepth++);
         currentBest = allMovesGenerator.generateMove(rack, board, params);
+
+        // Don't continue if a termainal state was reached
+        if ( params.getBoolean(FixedDepthParamKey.REACHED_TERMINAL_STATE) ) {
+          LOG.info("Reached terminal state at depth {}", (currentDepth-1));
+          complete = true;
+          break;
+        }
       }
+    }
+
+    public boolean isComplete() {
+      return complete;
     }
 
     public Move getBestMove() {

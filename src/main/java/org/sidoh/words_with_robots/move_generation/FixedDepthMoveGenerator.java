@@ -6,6 +6,7 @@ import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 import org.sidoh.words_with_robots.move_generation.params.FixedDepthParamKey;
 import org.sidoh.words_with_robots.move_generation.params.KillSignalBeacon;
 import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.params.PreemptionContext;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
@@ -110,6 +111,8 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
         closure.getReturnMove().getResult().getScore(),
         closure.getReturnValue()});
 
+     params.set(FixedDepthParamKey.REACHED_TERMINAL_STATE, closure.reachedTerminalState());
+
     return closure.getReturnMove();
   }
 
@@ -117,16 +120,16 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
     // If this is a terminal state, evaluate the game state.
     if ( closure.getRemainingDepth() == 0 || closure.getRack().getTilesSize() == 0 ) {
       double score = evaluateState(closure);
-
-      LOG.debug("Hit terminal state. Score = {}", score);
-
-      return closure.setReturnValue( score );
+      return closure
+        .setReturnValue( score )
+        .setReachedTerminalState( true );
     }
 
-    KillSignalBeacon killBeacon = (KillSignalBeacon) closure.getParams().get(FixedDepthParamKey.KILL_SIGNAL_BEACON);
+    PreemptionContext preemptionContext = (PreemptionContext) closure.getParams().get(FixedDepthParamKey.PREEMPTION_CONTEXT);
 
     // If we get the kill signal, halt execution.
-    if ( killBeacon.shouldKill() ) {
+    if ( preemptionContext.getPreemptState() == PreemptionContext.State.STRONG_PREEMPT ) {
+      LOG.info("Obeying preemption order -- halting.");
       return closure;
     }
 
@@ -320,6 +323,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
     private Move returnMove;
     private int returnMoveIndex;
     private MinMaxPriorityQueue<AlphaBetaClosure> moveCache;
+    private boolean reachedTerminalState;
 
     public AlphaBetaClosure() {  }
 
@@ -337,6 +341,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
       value.returnMove = returnMove;
       value.moveCache = moveCache;
       value.returnMoveIndex = returnMoveIndex;
+      value.reachedTerminalState = reachedTerminalState;
 
       return value;
     }
@@ -387,6 +392,10 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
 
     public int getReturnMoveIndex() {
       return returnMoveIndex;
+    }
+
+    public boolean reachedTerminalState() {
+      return reachedTerminalState;
     }
 
     public AlphaBetaClosure setReturnMoveIndex(int returnMoveIndex) {
@@ -446,6 +455,11 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
 
     public AlphaBetaClosure setParams(MoveGeneratorParams params) {
       this.params = params;
+      return this;
+    }
+
+    public AlphaBetaClosure setReachedTerminalState(boolean value) {
+      this.reachedTerminalState = value;
       return this;
     }
   }
