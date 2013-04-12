@@ -8,8 +8,10 @@ import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
 import org.sidoh.words_with_robots.move_generation.GadDagWwfMoveGenerator;
 import org.sidoh.words_with_robots.move_generation.IterativeDeepeningMoveGenerator;
 import org.sidoh.words_with_robots.move_generation.WordsWithFriendsMoveGenerator;
+import org.sidoh.words_with_robots.move_generation.params.FixedDepthParamKey;
 import org.sidoh.words_with_robots.move_generation.params.KillSignalBeacon;
 import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.params.PreemptionContext;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
 import org.sidoh.words_with_robots.util.dictionary.DictionaryHelper;
 import org.sidoh.wwf_api.AccessTokenRetriever;
@@ -159,6 +161,7 @@ public class Robot {
    */
   protected class RobotConsumer implements Runnable {
     private final RobotProducer producer;
+    private PreemptionContext preemptContext;
 
     /**
      *
@@ -188,6 +191,9 @@ public class Robot {
 
           // Mark the game as processed
           producer.releaseGame(state);
+          synchronized ( this ) {
+            preemptContext = null;
+          }
         }
         catch (InterruptedException e) {
           throw new RuntimeException(e);
@@ -200,14 +206,39 @@ public class Robot {
     }
 
     /**
+     *
+     */
+    public synchronized void weakPreempt() {
+      if ( preemptContext == null ) {
+        throw new IllegalStateException("Can't preempt -- not processing");
+      }
+      preemptContext.weakPreempt();
+    }
+
+    /**
+     * Causes current
+     */
+    public synchronized void strongPreempt() {
+      if ( preemptContext == null ) {
+        throw new IllegalStateException("Can't preempt -- not processing");
+      }
+      preemptContext.strongPreempt();
+    }
+
+    /**
      * Build MoveGeneratorParams for use with a particular game state
      *
      * @param state
      * @return
      */
     public MoveGeneratorParams buildParams(GameState state) {
+      synchronized (this) {
+        preemptContext = new PreemptionContext();
+      }
+
       return new MoveGeneratorParams()
-        .set(WwfMoveGeneratorParamKey.GAME_STATE, state);
+        .set(WwfMoveGeneratorParamKey.GAME_STATE, state)
+        .set(FixedDepthParamKey.PREEMPTION_CONTEXT, preemptContext);
     }
   }
 
@@ -287,6 +318,9 @@ public class Robot {
               continue;
             }
             if ( gameMeta.getCurrentMoveUserId() != index.getUser().getId() ) {
+              continue;
+            }
+            if ( gameMeta.getUsersByIdSize() == 1 ) {
               continue;
             }
 

@@ -122,7 +122,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
       double score = evaluateState(closure);
       return closure
         .setReturnValue( score )
-        .setReachedTerminalState( true );
+        .setReachedTerminalState( closure.getRack().getTilesSize() == 0 );
     }
 
     PreemptionContext preemptionContext = (PreemptionContext) closure.getParams().get(FixedDepthParamKey.PREEMPTION_CONTEXT);
