@@ -126,10 +126,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
     }
 
     PreemptionContext preemptionContext = (PreemptionContext) closure.getParams().get(FixedDepthParamKey.PREEMPTION_CONTEXT);
-
-    // If we get the kill signal, halt execution.
     if ( preemptionContext.getPreemptState() == PreemptionContext.State.STRONG_PREEMPT ) {
-      LOG.info("Obeying preemption order -- halting.");
       return closure;
     }
 

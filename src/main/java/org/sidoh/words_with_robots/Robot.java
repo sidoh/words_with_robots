@@ -9,7 +9,6 @@ import org.sidoh.words_with_robots.move_generation.GadDagWwfMoveGenerator;
 import org.sidoh.words_with_robots.move_generation.IterativeDeepeningMoveGenerator;
 import org.sidoh.words_with_robots.move_generation.WordsWithFriendsMoveGenerator;
 import org.sidoh.words_with_robots.move_generation.params.FixedDepthParamKey;
-import org.sidoh.words_with_robots.move_generation.params.KillSignalBeacon;
 import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.PreemptionContext;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
@@ -23,7 +22,7 @@ import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameIndex;
 import org.sidoh.wwf_api.types.api.GameMeta;
 import org.sidoh.wwf_api.types.api.GameState;
-import org.sidoh.wwf_api.types.game_state.BoardStorage;
+import org.sidoh.wwf_api.types.api.MoveType;
 import org.sidoh.wwf_api.types.game_state.Rack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +48,7 @@ public class Robot {
    * Defines the default number of maximum active games to keep running. If there are fewer games
    * than this, the robot will try to create more.
    */
-  public final static int DEFUALT_MAX_GAMES = 10;
+  public final static int DEFUALT_MAX_GAMES = 20;
 
   /**
    * The maximum number of consumer threads.
@@ -57,9 +56,14 @@ public class Robot {
   public final static int DEFAULT_MAX_THREADS = 4;
 
   /**
-   * The number of milliseconds to wait inbetween polling for active games
+   * The number of milliseconds to wait in-between polling for active games
    */
   public final static long DEFAULT_POLL_PERIOD = 10000L;
+
+  /**
+   * The number of seconds to wait before expiring a game to make room for a new one
+   */
+  public final static int DEFAULT_GAME_EXPIRE_TIME = 86400;
 
   protected final static GameStateHelper stateHelper = new GameStateHelper();
 
@@ -70,7 +74,6 @@ public class Robot {
   private ExecutorService threadPool;
   private long pollPeriod;
   private final StatefulApiProvider apiProvider;
-  private KillSignalBeacon killBeacon;
 
   /**
    *
@@ -84,7 +87,6 @@ public class Robot {
     this.maxThreads = DEFAULT_MAX_THREADS;
     this.threadPool = Executors.newFixedThreadPool(maxThreads);
     this.pollPeriod = DEFAULT_POLL_PERIOD;
-    this.killBeacon = new KillSignalBeacon();
     getMoveGenerator();
   }
 
@@ -173,7 +175,7 @@ public class Robot {
 
     @Override
     public void run() {
-      while ( !killBeacon.shouldKill() ) {
+      while ( true ) {
         try {
           // Wait for a state to be available in the queue
           GameState state = producer.takeGame();
@@ -289,10 +291,8 @@ public class Robot {
 
     @Override
     public void run() {
-      while ( !killBeacon.shouldKill() ) {
+      while ( true ) {
         try {
-          LOG.info("Polling for new games...");
-
           // Fetch the index and find games that have pending moves and that aren't already queued
           GameIndex index;
           if ( lastUpdate == 0) {
@@ -313,14 +313,25 @@ public class Robot {
               numActiveGames++;
             }
 
-            // Only consider games where it's our turn
+            // Only consider games where we can actually make a move
+            boolean shouldSkip = false;
             if ( gameMeta.isOver() ) {
-              continue;
+              shouldSkip = true;
             }
             if ( gameMeta.getCurrentMoveUserId() != index.getUser().getId() ) {
-              continue;
+              shouldSkip = true;
             }
             if ( gameMeta.getUsersByIdSize() == 1 ) {
+              shouldSkip = true;
+            }
+
+            if ( shouldSkip ) {
+              // Cancel expired games
+              if ( shouldCancelGame(gameMeta) ) {
+                LOG.info("Cancelling game: {}", gameId);
+                GameState state = apiProvider.getGameState(gameId);
+                apiProvider.makeMove(state, stateHelper.createMoveSubmission(MoveType.GAME_OVER));
+              }
               continue;
             }
 
@@ -334,7 +345,7 @@ public class Robot {
               activeGames.add(gameId);
             }
             else {
-              LOG.info("Skipped active game {}. Active games = {}.", gameId, activeGames);
+              LOG.debug("Skipped active game {}. Active games = {}.", gameId, activeGames);
             }
           }
 
@@ -349,7 +360,7 @@ public class Robot {
             statusCounts.increment(gameScoreStatus);
           }
 
-          LOG.info("Active game status summary: winning {}, losing {}, tied {}.",
+          LOG.debug("Active game status summary: winning {}, losing {}, tied {}.",
             new Object[] {
               statusCounts.getCount(GameScoreStatus.WINNING),
               statusCounts.getCount(GameScoreStatus.LOSING),
@@ -361,7 +372,27 @@ public class Robot {
           throw new RuntimeException(e);
         }
       }
-      LOG.info("Producer shutting down");
+    }
+
+    /**
+     * Determine whether or not a game should be cancelled (i.e., we should end it preemptively
+     * because the opponent is unresponsive.)
+     *
+     * @param gameMeta
+     * @return
+     */
+    public boolean shouldCancelGame(GameMeta gameMeta) {
+      // Don't try to cancel inactive games.
+      if ( gameMeta.isOver() ) {
+        return false;
+      }
+      // If there's been a move, use that as the reference point. Otherwise, use game creation time.
+      String lastActionTimestamp = gameMeta.isSetLastMove()
+        ? gameMeta.getLastMove().getCreatedAt()
+        : gameMeta.getCreatedAt();
+      int secondSinceLastAction = stateHelper.getNumSecondsEllapsedSinceTimestamp(lastActionTimestamp);
+
+      return secondSinceLastAction > DEFAULT_GAME_EXPIRE_TIME;
     }
   }
 

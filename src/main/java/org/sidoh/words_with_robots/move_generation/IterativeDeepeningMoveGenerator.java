@@ -38,7 +38,7 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
     long startTime = System.currentTimeMillis();
 
     // Set up and start a producer thread
-    IterativeDeepeningProducer producer = new IterativeDeepeningProducer(rack, board, params);
+    IterativeDeepeningProducer producer = new IterativeDeepeningProducer(rack, board, childParams);
     Thread producerThread = new Thread(producer);
     producerThread.start();
 
@@ -50,6 +50,8 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
         throw new RuntimeException(e);
       }
     }
+
+    LOG.info("Preempting producer...");
 
     // Kill the move generator
     childPreemptionContext.strongPreempt();
@@ -114,7 +116,7 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
       this.board = board;
       this.rack = rack;
       this.params = params;
-      this.currentDepth = 1;
+      this.currentDepth = 2;
       this.complete = false;
     }
 
@@ -125,15 +127,17 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
 
       while ( beacon.getPreemptState() == PreemptionContext.State.NOT_PREEMPTED ) {
         LOG.info("Moving to depth {}", currentDepth);
-        params.set(FixedDepthParamKey.MAXIMUM_DEPTH, currentDepth++);
+        params.set(FixedDepthParamKey.MAXIMUM_DEPTH, currentDepth);
         currentBest = allMovesGenerator.generateMove(rack, board, params);
 
-        // Don't continue if a termainal state was reached
+        // Don't continue if a terminal state was reached
         if ( params.getBoolean(FixedDepthParamKey.REACHED_TERMINAL_STATE) ) {
-          LOG.info("Reached terminal state at depth {}", (currentDepth-1));
+          LOG.info("Reached terminal state at depth {}", currentDepth);
           complete = true;
           break;
         }
+
+        currentDepth += 2;
       }
     }
 
