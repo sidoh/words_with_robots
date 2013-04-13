@@ -1,6 +1,7 @@
 package org.sidoh.words_with_robots;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.sidoh.words_with_robots.data_structures.CountingHashMap;
@@ -29,10 +30,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 
 /**
@@ -65,6 +68,12 @@ public class Robot {
    */
   public final static int DEFAULT_GAME_EXPIRE_TIME = 86400;
 
+  /**
+   * Number of concurrent active games before consumers are weakly preempted, allowing them to run
+   * through their minimum execution time, but not max.
+   */
+  public final static int DEFAULT_PREEMPTION_THRESHOLD = 6;
+
   protected final static GameStateHelper stateHelper = new GameStateHelper();
 
   private int maxGames;
@@ -74,6 +83,7 @@ public class Robot {
   private ExecutorService threadPool;
   private long pollPeriod;
   private final StatefulApiProvider apiProvider;
+  private int preemptionThreshold;
 
   /**
    *
@@ -87,6 +97,7 @@ public class Robot {
     this.maxThreads = DEFAULT_MAX_THREADS;
     this.threadPool = Executors.newFixedThreadPool(maxThreads);
     this.pollPeriod = DEFAULT_POLL_PERIOD;
+    this.preemptionThreshold = DEFAULT_PREEMPTION_THRESHOLD;
     getMoveGenerator();
   }
 
@@ -145,16 +156,77 @@ public class Robot {
   }
 
   /**
+   * Update the preemption threshold
+   *
+   * @param threshold
+   * @return
+   */
+  public Robot setPreemptionThreshold(int threshold) {
+    this.preemptionThreshold = threshold;
+    return this;
+  }
+
+  /**
    * Start the robot
    */
   public void start() {
     RobotProducer producer = new RobotProducer();
+    List<RobotConsumer> consumers = Lists.newArrayList();
     for ( int i = 0; i < maxThreads; i++ ) {
-      threadPool.submit(new RobotConsumer(producer));
+      RobotConsumer consumer = new RobotConsumer(producer);
+      consumers.add(consumer);
+      threadPool.submit(consumer);
     }
 
     Thread producerThread = new Thread(producer);
     producerThread.start();
+
+    RobotPreempter preempter = new RobotPreempter(producer, consumers);
+    Thread preempterThread = new Thread(preempter);
+    preempterThread.start();
+  }
+
+  private class RobotPreempter implements Runnable {
+    private final RobotProducer producer;
+    private final List<RobotConsumer> consumers;
+
+    public RobotPreempter(RobotProducer producer, List<RobotConsumer> consumers) {
+      this.producer = producer;
+      this.consumers = consumers;
+    }
+
+    @Override
+    public void run() {
+      while ( true ) {
+        if ( producer.numActiveGames() >= preemptionThreshold ) {
+          for ( int i = 0; i < (preemptionThreshold - numActiveConsumers()); i++ ) {
+            LOG.info("Weak preempting a consumer");
+            consumers.get(i).weakPreempt();
+          }
+        }
+
+        try {
+          Thread.sleep(100);
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+
+    /**
+     *
+     * @return the number of currently occupied consumers
+     */
+    protected int numActiveConsumers() {
+      int count = 0;
+      for (RobotConsumer consumer : consumers) {
+        if ( consumer.isOccupied() ) {
+          count++;
+        }
+      }
+      return count;
+    }
   }
 
   /**
@@ -205,6 +277,14 @@ public class Robot {
             Joiner.on('\n').join(e.getStackTrace()));
         }
       }
+    }
+
+    /**
+     *
+     * @return true if this consumer is currently processing a game
+     */
+    public synchronized boolean isOccupied() {
+      return preemptContext != null;
     }
 
     /**
@@ -265,6 +345,15 @@ public class Robot {
     }
 
     /**
+     * Returns the number of games actively being processed
+     *
+     * @return
+     */
+    public synchronized int numActiveGames() {
+      return activeGames.size();
+    }
+
+    /**
      * Waits until a game is available in the queue and takes it. Note that consumers should call
      * releaseGame(GameState) when finished so that another consumer can consume this game when
      * it's our turn again.
@@ -295,7 +384,7 @@ public class Robot {
         try {
           // Fetch the index and find games that have pending moves and that aren't already queued
           GameIndex index;
-          if ( lastUpdate == 0) {
+          if ( lastUpdate == 0 ) {
             index = apiProvider.getGameIndex();
           }
           else {
@@ -314,16 +403,10 @@ public class Robot {
             }
 
             // Only consider games where we can actually make a move
-            boolean shouldSkip = false;
-            if ( gameMeta.isOver() ) {
-              shouldSkip = true;
-            }
-            if ( gameMeta.getCurrentMoveUserId() != index.getUser().getId() ) {
-              shouldSkip = true;
-            }
-            if ( gameMeta.getUsersByIdSize() == 1 ) {
-              shouldSkip = true;
-            }
+            boolean shouldSkip =
+              gameMeta.isOver()
+                || gameMeta.getCurrentMoveUserId() != index.getUser().getId()
+                || gameMeta.getUsersByIdSize() == 1;
 
             if ( shouldSkip ) {
               // Cancel expired games

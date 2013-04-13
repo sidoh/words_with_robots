@@ -25,7 +25,7 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
   public Move generateMove(Rack rack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
     LOG.info("Generating move. Starting at depth 1");
 
-    // Git our preemption context, which will allow us to preempt the underlying fixed store
+    // Get our preemption context, which will allow us to preempt the underlying fixed store
     // when its minimum time to run is up
    PreemptionContext preemptionContext = (PreemptionContext) params.get(FixedDepthParamKey.PREEMPTION_CONTEXT);
 
@@ -62,7 +62,7 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
     }
 
     // Spit out the best move that we've found
-    LOG.info("Made it to depth {}", producer.currentDepth-1);
+    LOG.info("Made it to depth {}", producer.currentDepth-2);
     return producer.getBestMove();
   }
 
