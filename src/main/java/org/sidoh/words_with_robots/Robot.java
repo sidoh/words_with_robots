@@ -252,21 +252,24 @@ public class Robot {
           // Wait for a state to be available in the queue
           GameState state = producer.takeGame();
 
-          // Reconstruct the game state (rack and board)
-          Rack rack = stateHelper.getCurrentPlayerRack(state);
-          WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
+          try {
+            // Reconstruct the game state (rack and board)
+            Rack rack = stateHelper.getCurrentPlayerRack(state);
+            WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
-          // Generate a move
-          MoveGeneratorParams params = buildParams(state);
-          Move generatedMove = getMoveGenerator().generateMove(rack, board, params);
+            // Generate a move
+            MoveGeneratorParams params = buildParams(state);
+            Move generatedMove = getMoveGenerator().generateMove(rack, board, params);
 
-          // Submit the generated move
-          apiProvider.makeMove(state, stateHelper.createMoveSubmissionFromPlay(generatedMove));
-
-          // Mark the game as processed
-          producer.releaseGame(state);
-          synchronized ( this ) {
-            preemptContext = null;
+            // Submit the generated move
+            apiProvider.makeMove(state, stateHelper.createMoveSubmissionFromPlay(generatedMove));
+          }
+          finally {
+            // Mark the game as processed
+            producer.releaseGame(state);
+            synchronized ( this ) {
+              preemptContext = null;
+            }
           }
         }
         catch (InterruptedException e) {
