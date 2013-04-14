@@ -44,7 +44,13 @@ public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsW
       }
     }
 
-    return bestMove;
+    // Pass if a move wasn't generated
+    if ( bestMove == null ) {
+      return Move.pass();
+    }
+    else {
+      return bestMove;
+    }
   }
 
   /**

@@ -31,8 +31,8 @@ public class GadDagWwfMoveGenerator extends WordsWithFriendsMoveGenerator {
     SlotIterator.Iterator left = new SlotIterator.Iterator(row, col, WordsWithFriendsBoard.DIMENSIONS, WordsWithFriendsBoard.DIMENSIONS, WordOrientation.HORIZONTAL, Direction.BACKWARDS);
     SlotIterator.Iterator up = new SlotIterator.Iterator(row, col, WordsWithFriendsBoard.DIMENSIONS, WordsWithFriendsBoard.DIMENSIONS, WordOrientation.VERTICAL, Direction.BACKWARDS);
 
-    Move blankMoveLeft = new Move(Collections.<Tile>emptyList(), row, col, WordOrientation.HORIZONTAL);
-    Move blankMoveUp = new Move(Collections.<Tile>emptyList(), row, col, WordOrientation.VERTICAL);
+    Move blankMoveLeft = Move.play(Collections.<Tile>emptyList(), row, col, WordOrientation.HORIZONTAL);
+    Move blankMoveUp = Move.play(Collections.<Tile>emptyList(), row, col, WordOrientation.VERTICAL);
 
     Set<Move> moves = new HashSet<Move>();
 

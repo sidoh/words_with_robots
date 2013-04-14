@@ -8,7 +8,7 @@ public enum IterativeDeepeningParamKey implements MoveGeneratorParamKey {
    * Maximum number of milliseconds to let the algorithm run. Iterative deepening works by
    * iteratively incrementing the number of lookahead plies until it runs out of time.
    */
-  MAX_EXECUTION_TIME_IN_MS(120000L),
+  MAX_EXECUTION_TIME_IN_MS(1200000L),
 
   /**
    * The minimum number of milliseconds to allow this algorithm to run if a terminal state

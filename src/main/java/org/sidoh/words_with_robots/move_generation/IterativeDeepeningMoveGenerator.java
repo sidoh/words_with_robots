@@ -7,6 +7,7 @@ import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.PreemptionContext;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
+import org.sidoh.wwf_api.types.api.MoveType;
 import org.sidoh.wwf_api.types.game_state.Rack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,10 +129,17 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
       while ( beacon.getPreemptState() == PreemptionContext.State.NOT_PREEMPTED ) {
         LOG.info("Moving to depth {}", currentDepth);
         params.set(FixedDepthParamKey.MAXIMUM_DEPTH, currentDepth);
-        currentBest = allMovesGenerator.generateMove(rack, board, params);
+
+        try {
+          currentBest = allMovesGenerator.generateMove(rack, board, params);
+        }
+        catch ( Exception e ) {
+          LOG.error("Exception generating move: {}", e);
+          return;
+        }
 
         // Don't continue if a terminal state was reached
-        if ( params.getBoolean(FixedDepthParamKey.REACHED_TERMINAL_STATE) ) {
+        if ( params.getBoolean(FixedDepthParamKey.REACHED_TERMINAL_STATE) || currentBest.getMoveType() == MoveType.PASS ) {
           LOG.info("Reached terminal state at depth {}", currentDepth);
           complete = true;
           break;

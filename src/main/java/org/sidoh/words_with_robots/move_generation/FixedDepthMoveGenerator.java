@@ -104,6 +104,12 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
 
     closure = alphaBetaSearch(closure);
 
+    // Pass if we couldn't generate a move
+    if ( closure.getReturnMove() == null ) {
+      params.set(FixedDepthParamKey.REACHED_TERMINAL_STATE, true);
+      return Move.pass();
+    }
+
     LOG.info("generated move: {}. It had index {}, and is worth {} points. ab-search returned: {}",
       new Object[]{
         closure.getReturnMove().getResult().getResultingWords(),
@@ -111,8 +117,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
         closure.getReturnMove().getResult().getScore(),
         closure.getReturnValue()});
 
-     params.set(FixedDepthParamKey.REACHED_TERMINAL_STATE, closure.reachedTerminalState());
-
+    params.set(FixedDepthParamKey.REACHED_TERMINAL_STATE, closure.reachedTerminalState());
     return closure.getReturnMove();
   }
 
