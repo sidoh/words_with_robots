@@ -40,12 +40,12 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.5.8</version>
+            <version>1.7.5</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.5.8</version>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.5</version>
         </dependency>
         <dependency>
             <groupId>org.apache.thrift</groupId>
@@ -79,10 +79,22 @@
             <resource>
               <directory>src/resources/dictionaries</directory>
             </resource>
+            <resource>
+              <directory>src/main/resources</directory>
+              <includes>
+                <include>**/*.properties</include>
+              </includes>
+            </resource>
         </resources>
         <testResources>
             <testResource>
               <directory>src/resources/game_states</directory>
+            </testResource>
+            <testResource>
+              <directory>src/test/resources</directory>
+              <includes>
+                <include>**/*.properties</include>
+              </includes>
             </testResource>
         </testResources>
         <plugins>

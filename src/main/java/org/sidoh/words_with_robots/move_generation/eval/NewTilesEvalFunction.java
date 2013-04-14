@@ -13,7 +13,7 @@ import java.util.List;
 public class NewTilesEvalFunction implements EvaluationFunction {
   private static final Logger LOG = LoggerFactory.getLogger(NewTilesEvalFunction.class);
   private static final int BLANK_VALUE = 15;
-  private static final GameStateHelper stateHelper = new GameStateHelper();
+  private static final GameStateHelper stateHelper = GameStateHelper.getInstance();
 
   @Override
   public double score(Move move, GameState state) {

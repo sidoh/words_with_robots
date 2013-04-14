@@ -50,7 +50,7 @@ public class WwfConsole {
   static WordsWithFriendsMoveGenerator moveGenerator
     = new IterativeDeepeningMoveGenerator(allMovesGen);
   static StatefulApiProvider api;
-  static final GameStateHelper stateHelper = new GameStateHelper();
+  static final GameStateHelper stateHelper = GameStateHelper.getInstance();
 
   public static void handleGameSelection(User player, GameMeta meta) {
     while (true) {

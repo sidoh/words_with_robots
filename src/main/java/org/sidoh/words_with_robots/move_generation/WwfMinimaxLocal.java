@@ -33,7 +33,7 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
   private static final double CACHE_MISS_FLUSH_FACTOR = 0.5f;
 
   private final WordsWithFriendsMoveGenerator inner;
-  private static final GameStateHelper stateHelper = new GameStateHelper();
+  private static final GameStateHelper stateHelper = GameStateHelper.getInstance();
 
   public WwfMinimaxLocal(WordsWithFriendsMoveGenerator inner) {
     this.inner = inner;

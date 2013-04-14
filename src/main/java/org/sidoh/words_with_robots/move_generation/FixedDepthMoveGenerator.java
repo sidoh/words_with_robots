@@ -30,7 +30,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
   private static final Logger LOG = LoggerFactory.getLogger(FixedDepthMoveGenerator.class);
 
   private final WordsWithFriendsMoveGenerator inner;
-  private static final GameStateHelper stateHelper = new GameStateHelper();
+  private static final GameStateHelper stateHelper = GameStateHelper.getInstance();
 
   /**
    * A helper class to make switching between min/max easy.
