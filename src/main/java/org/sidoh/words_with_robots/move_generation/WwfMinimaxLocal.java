@@ -62,13 +62,13 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
 
     // Optimization: sort the moves by the number of points it's worth. Considering them first tends to trim
     // the search space a lot sooner.
-    Collections.sort(allMoves1, Collections.reverseOrder(new MoveScoreComparator(eval, state)));
+    Collections.sort(allMoves1, MoveScoreComparator.rawScoreComparator());
 
     // Optimization: remember the top N opponent moves (by score) and try them when considering each of the
     // possible moves. This has a high probability of allowing us to avoid generating possible opponent
     // moves.
     MinMaxPriorityQueue<Move> opMoveCache = MinMaxPriorityQueue
-      .orderedBy(Collections.reverseOrder(new MoveScoreComparator(new ScoreEvalFunction(), null)))
+      .orderedBy(MoveScoreComparator.rawScoreComparator())
       .maximumSize(DEFAULT_MOVE_CACHE_SIZE)
       .create();
 

@@ -96,6 +96,12 @@ class RobotConsumer implements Runnable {
           // Submit the generated move
           apiProvider.makeMove(state, Robot.stateHelper.createMoveSubmissionFromPlay(generatedMove));
           moveCache.remove(state.getId());
+
+          // Log stats
+          Map<String, Object> stats = (Map<String, Object>) params.get(WwfMoveGeneratorParamKey.GAME_STATS);
+          for (Map.Entry<String, Object> entry : stats.entrySet()) {
+            LOG.info("Move generator stats: gameId {}, {}={}", state.getId(), entry.getKey(), entry.getValue());
+          }
         }
         finally {
           // Mark the game as processed
@@ -155,6 +161,7 @@ class RobotConsumer implements Runnable {
     }
 
     return new MoveGeneratorParams()
+      .set(WwfMoveGeneratorParamKey.GAME_STATS, Maps.newHashMap())
       .set(WwfMoveGeneratorParamKey.GAME_STATE, state)
       .set(FixedDepthParamKey.PREEMPTION_CONTEXT, preemptContext);
   }

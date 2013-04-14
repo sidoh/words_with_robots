@@ -1,5 +1,6 @@
 package org.sidoh.words_with_robots.move_generation.params;
 
+import com.google.common.collect.Maps;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 
 /**
@@ -24,6 +25,11 @@ public enum WwfMoveGeneratorParamKey implements MoveGeneratorParamKey {
   BEST_OPPONENT_MOVE(null),
 
   /**
+   * Allows move generators to produce statistics which consumers an track
+   */
+  GAME_STATS,
+
+  /**
    * REQUIRED PARAM! The GameState for the corresponding board.
    */
   GAME_STATE;
@@ -45,6 +51,9 @@ public enum WwfMoveGeneratorParamKey implements MoveGeneratorParamKey {
   public Object getDefaultValue() {
     if ( !required ) {
       return defaultValue;
+    }
+    else if ( this == GAME_STATS ) {
+      return Maps.<String, Object>newHashMap();
     }
     else {
       throw new RuntimeException("Param: " + this + " is required!");

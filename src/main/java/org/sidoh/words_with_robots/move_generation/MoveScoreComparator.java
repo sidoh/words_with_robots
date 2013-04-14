@@ -1,9 +1,11 @@
 package org.sidoh.words_with_robots.move_generation;
 
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
+import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.types.api.GameState;
 
+import java.util.Collections;
 import java.util.Comparator;
 
 class MoveScoreComparator implements Comparator<Move> {
@@ -29,5 +31,14 @@ class MoveScoreComparator implements Comparator<Move> {
     else {
       return 0;
     }
+  }
+
+  /**
+   * Gets a comparator that puts the highest-scoring moves at the front of the list
+   *
+   * @return
+   */
+  public static Comparator<Move> rawScoreComparator() {
+    return Collections.reverseOrder(new MoveScoreComparator(new ScoreEvalFunction(), null));
   }
 }

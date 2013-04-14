@@ -1,10 +1,15 @@
 package org.sidoh.words_with_robots.move_generation;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
+import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 import org.sidoh.words_with_robots.move_generation.params.FixedDepthParamKey;
 import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningParamKey;
 import org.sidoh.words_with_robots.move_generation.params.KillSignalBeacon;
 import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.PreemptionContext;
+import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.MoveType;
@@ -12,6 +17,9 @@ import org.sidoh.wwf_api.types.game_state.Rack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerator {
@@ -24,7 +32,9 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
 
   @Override
   public Move generateMove(Rack rack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
-    LOG.info("Generating move. Starting at depth 1");
+    LOG.info("Generating move. Starting at depth 2");
+    boolean verboseStats = params.getBoolean(IterativeDeepeningParamKey.VERBOSE_STATS_ENABLED);
+    Map<String, Object> stats = (Map<String, Object>)params.get(WwfMoveGeneratorParamKey.GAME_STATS);
 
     // Get our preemption context, which will allow us to preempt the underlying fixed store
     // when its minimum time to run is up
@@ -64,7 +74,50 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
 
     // Spit out the best move that we've found
     LOG.info("Made it to depth {}", producer.currentDepth-2);
+    stats.put(getStatsKey("max_depth"), producer.currentDepth-2);
+
+    // Find the index of the produced move
+    Move bestMove = producer.getBestMove();
+
+    if ( verboseStats ) {
+      stats.put(getStatsKey("move_rank"), findMoveRank(rack, board, bestMove));
+    }
+
     return producer.getBestMove();
+  }
+
+  /**
+   * Finds the rank for the generated move. The rank is the index of the sorted scores.
+   *
+   * @param rack
+   * @param board
+   * @param move
+   * @return
+   */
+  protected int findMoveRank(Rack rack, WordsWithFriendsBoard board, Move move) {
+    Set<Integer> uniqueScores = Sets.newHashSet();
+    for (Move possibleMove : allMovesGenerator.generateAllPossibleMoves(rack, board)) {
+      uniqueScores.add(possibleMove.getResult().getScore());
+    }
+    List<Integer> scores = Lists.newArrayList(uniqueScores);
+    Collections.sort(scores, Collections.reverseOrder());
+    LOG.info("Sorted possible scores: {}", scores);
+
+    if ( scores.size() == 0 ) {
+      return -1;
+    }
+    else {
+      return scores.indexOf(move.getResult().getScore());
+    }
+  }
+
+  /**
+   * Construct a stats key.
+   *
+   * @return
+   */
+  protected String getStatsKey(String keyPart) {
+    return "iterative_deepening_".concat(keyPart);
   }
 
   /**
@@ -131,7 +184,12 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
         params.set(FixedDepthParamKey.MAXIMUM_DEPTH, currentDepth);
 
         try {
-          currentBest = allMovesGenerator.generateMove(rack, board, params);
+          Move best = allMovesGenerator.generateMove(rack, board, params);
+
+          // Don't update the best if we've been preempted.
+          if ( beacon.getPreemptState() == PreemptionContext.State.NOT_PREEMPTED ) {
+            currentBest = best;
+          }
         }
         catch ( Exception e ) {
           LOG.error("Exception generating move: {}", e);
