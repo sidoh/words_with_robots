@@ -167,12 +167,6 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
     // If not, generate moves.
     List<Move> moves = getSortedMoves(closure);
 
-    // If no moves are possible, pass
-    if ( moves.size() == 0 ) {
-      params.set(FixedDepthParamKey.REACHED_TERMINAL_STATE, true);
-      return closure.setReachedTerminalState(true);
-    }
-
     Move returnMove = null;
     AlphaBetaClosure returnClosure = null;
     MinMaxPriorityQueue<AlphaBetaClosure> moveCache = MinMaxPriorityQueue
