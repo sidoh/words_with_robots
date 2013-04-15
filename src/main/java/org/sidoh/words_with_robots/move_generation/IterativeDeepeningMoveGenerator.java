@@ -95,6 +95,10 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
    * @return
    */
   protected int findMoveRank(Rack rack, WordsWithFriendsBoard board, Move move) {
+    if ( move == null || move.getMoveType() != MoveType.PLAY ) {
+      return -1;
+    }
+
     Set<Integer> uniqueScores = Sets.newHashSet();
     for (Move possibleMove : allMovesGenerator.generateAllPossibleMoves(rack, board)) {
       uniqueScores.add(possibleMove.getResult().getScore());

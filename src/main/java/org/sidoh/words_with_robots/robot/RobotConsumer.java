@@ -115,8 +115,7 @@ class RobotConsumer implements Runnable {
         throw new RuntimeException(e);
       }
       catch (Exception e) {
-        LOG.error("Exception while consuming game state: \n{}",
-          Joiner.on('\n').join(e.getStackTrace()));
+        LOG.error("Exception while consuming game state", e);
       }
     }
   }

@@ -1,5 +1,6 @@
 package org.sidoh.words_with_robots.move_generation;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.MinMaxPriorityQueue;
 import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
@@ -12,6 +13,7 @@ import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
+import org.sidoh.wwf_api.types.api.MoveType;
 import org.sidoh.wwf_api.types.game_state.Rack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,11 +113,10 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
     }
 
     LOG.info("generated move: {}. It had index {}, and is worth {} points. ab-search returned: {}",
-      new Object[]{
         closure.getReturnMove().getResult().getResultingWords(),
         closure.getReturnMoveIndex(),
         closure.getReturnMove().getResult().getScore(),
-        closure.getReturnValue()});
+        closure.getReturnValue());
 
     params.set(FixedDepthParamKey.REACHED_TERMINAL_STATE, closure.reachedTerminalState());
     return closure.getReturnMove();
@@ -165,6 +166,12 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
 
     // If not, generate moves.
     List<Move> moves = getSortedMoves(closure);
+
+    // If no moves are possible, pass
+    if ( moves.size() == 0 ) {
+      params.set(FixedDepthParamKey.REACHED_TERMINAL_STATE, true);
+      return closure.setReachedTerminalState(true);
+    }
 
     Move returnMove = null;
     AlphaBetaClosure returnClosure = null;

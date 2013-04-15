@@ -99,10 +99,10 @@ class RobotProducer implements Runnable {
       return index;
     }
     catch (ApiRequestException e) {
-      LOG.error("Error requesting game index {}", e);
+      LOG.error("Error requesting game index", e);
 
       // Sleep to block the caller
-      Thread.sleep(settings.getInteger(RobotSettingKey.GAME_INDEX_POLL_PERIOD));
+      Thread.sleep(settings.getLong(RobotSettingKey.GAME_INDEX_POLL_PERIOD));
       return null;
     }
   }
