@@ -92,7 +92,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
   public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
     GameState state = (GameState) params.get(WwfMoveGeneratorParamKey.GAME_STATE);
     long maxPlayer = state.getMeta().getCurrentMoveUserId();
-    Player max = new Player( maxPlayer, stateHelper.getOtherUser(maxPlayer, state).getId(), maxPlayer, true );
+    Player max = new Player( maxPlayer, stateHelper.getOtherUser(maxPlayer, state).getId(), maxPlayer, false );
 
     AlphaBetaClosure closure = new AlphaBetaClosure()
       .setAlpha( Double.NEGATIVE_INFINITY )

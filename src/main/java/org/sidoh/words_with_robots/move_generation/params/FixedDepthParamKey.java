@@ -14,20 +14,20 @@ public enum FixedDepthParamKey implements MoveGeneratorParamKey {
    * best-scoring moves from previous sibling game states. This sometimes helps us avoid repeated
    * work in re-generating moves for a given state.
    */
-  MOVE_CACHE_SIZE(10000),
+  MOVE_CACHE_SIZE(100),
 
   /**
    * The minimum score a move must have in order for us to consider it. If no moves have a score of
    * at least this value, we'll still consider the first one.
    */
-  MIN_SCORE(15),
+  MIN_SCORE(3),
 
   /**
    * The maximum number of moves to consider at each level. Limiting this helps reduce computation
    * time, but comes at the cost of loss of information (meaning potentially sub-optimal moves will
    * be generated).
    */
-  BRANCHING_FACTOR_LIMIT(10000),
+  BRANCHING_FACTOR_LIMIT(100),
 
   /**
    * FixedDepthMoveGenerator will look for this signal at every node in the search tree. If it's set

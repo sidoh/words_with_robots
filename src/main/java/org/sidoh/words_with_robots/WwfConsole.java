@@ -315,10 +315,15 @@ public class WwfConsole {
   public static void main(String[] args) throws IOException {
     Reader dictionary;
 
-    authToken = new AccessTokenRetriever().promptForAccessToken();
+    if ( args.length == 0 ) {
+      authToken = new AccessTokenRetriever().promptForAccessToken();
+    }
+    else {
+      authToken = args[0];
+    }
 
-    if ( args.length > 0 ) {
-      dictionary = new FileReader(args[0]);
+    if ( args.length > 1 ) {
+      dictionary = new FileReader(args[1]);
     }
     else {
       InputStream resource = ClassLoader.getSystemResourceAsStream("wwf-dictionary.gz");
