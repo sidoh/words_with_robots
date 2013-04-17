@@ -14,7 +14,7 @@ public enum FixedDepthParamKey implements MoveGeneratorParamKey {
    * best-scoring moves from previous sibling game states. This sometimes helps us avoid repeated
    * work in re-generating moves for a given state.
    */
-  MOVE_CACHE_SIZE(100),
+  MOVE_CACHE_SIZE(1000),
 
   /**
    * The minimum score a move must have in order for us to consider it. If no moves have a score of

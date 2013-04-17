@@ -1,6 +1,5 @@
 package org.sidoh.words_with_robots.move_generation;
 
-import com.google.common.collect.Lists;
 import org.apache.thrift.TException;
 import org.sidoh.words_with_robots.WordsWithRobotsTestCase;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
@@ -8,12 +7,9 @@ import org.sidoh.words_with_robots.move_generation.params.FixedDepthParamKey;
 import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
 import org.sidoh.wwf_api.game_state.Move;
-import org.sidoh.wwf_api.game_state.TileBuilder;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
-import org.sidoh.wwf_api.types.game_state.BoardStorage;
 import org.sidoh.wwf_api.types.game_state.Rack;
-import org.sidoh.wwf_api.types.game_state.Tile;
 import org.sidoh.wwf_api.types.game_state.WordOrientation;
 
 import java.io.IOException;
@@ -45,6 +41,25 @@ public class TestFixedDepthMoveGenerator extends WordsWithRobotsTestCase {
     MoveGeneratorParams params = new MoveGeneratorParams()
       .set(FixedDepthParamKey.MAXIMUM_DEPTH, 8)
       .set(WwfMoveGeneratorParamKey.GAME_STATE, state);
-    System.out.println(moveGenerator.generateMove(rack, board, params));
+    Move move = moveGenerator.generateMove(rack, board, params);
+    board.move(move);
+
+    // Here, the move should be 'TUB' on the B in 'BIGOT'. This is a lower scoring move than
+    // the alternative, but it blocks the user from getting a very beneficial play by playing
+    // 'TABARETS'
+    assertEquals(move.getResult().getMainWord(), "TUB");
+  }
+
+  public void testUser() {
+    FixedDepthMoveGenerator.MinimaxPlayer player = new FixedDepthMoveGenerator.MinimaxPlayer(1, 2, 1, false);
+
+    assertTrue("Should be max", player.isMax());
+    assertEquals("Should have ID of first player", 1L, player.getUserId());
+    assertEquals("Other player ID should be second", 2L, player.getOtherUserId());
+
+    player = player.getOther();
+    assertTrue("Other should be min", player.isMin());
+    assertEquals("Other should have ID of second player", 2L, player.getUserId());
+    assertEquals("Other should have other ID of first player", 1L, player.getOtherUserId());
   }
 }
