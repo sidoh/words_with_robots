@@ -12,6 +12,7 @@ import org.sidoh.words_with_robots.move_generation.params.PreemptionContext;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
+import org.sidoh.wwf_api.types.api.GameState;
 import org.sidoh.wwf_api.types.api.MoveType;
 import org.sidoh.wwf_api.types.game_state.Rack;
 import org.slf4j.Logger;
@@ -182,6 +183,10 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
     public void run() {
       PreemptionContext beacon
         = (PreemptionContext) params.get(FixedDepthParamKey.PREEMPTION_CONTEXT);
+      GameState state
+        = (GameState) params.get(WwfMoveGeneratorParamKey.GAME_STATE);
+      int numTiles = (WordsWithFriendsBoard.TILES_PER_PLAYER*2)
+        + state.getRemainingTilesSize();
 
       while ( beacon.getPreemptState() == PreemptionContext.State.NOT_PREEMPTED ) {
         LOG.info("Moving to depth {}", currentDepth);
@@ -201,7 +206,10 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
         }
 
         // Don't continue if a terminal state was reached
-        if ( params.getBoolean(FixedDepthParamKey.REACHED_TERMINAL_STATE) || currentBest.getMoveType() == MoveType.PASS ) {
+        // don't continue if there have been more moves than there were tiles
+        if ( params.getBoolean(FixedDepthParamKey.REACHED_TERMINAL_STATE)
+          || currentBest.getMoveType() == MoveType.PASS
+          || currentDepth > numTiles) {
           LOG.info("Reached terminal state at depth {}", currentDepth);
           complete = true;
           break;

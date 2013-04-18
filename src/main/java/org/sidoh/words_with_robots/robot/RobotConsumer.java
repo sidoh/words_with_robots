@@ -11,6 +11,7 @@ import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamK
 import org.sidoh.wwf_api.StatefulApiProvider;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
+import org.sidoh.wwf_api.types.api.ChatMessage;
 import org.sidoh.wwf_api.types.api.GameState;
 import org.sidoh.wwf_api.types.game_state.Rack;
 import org.sidoh.wwf_api.util.ThriftSerializationHelper;
@@ -73,6 +74,35 @@ class RobotConsumer implements Runnable {
     }
   }
 
+  /**
+   * If enabled, send a courtesy chat message to our opponent informing them that they're playing
+   * against a bot.
+   *
+   * @param state
+   */
+  protected void sendCourtesyChat(GameState state) {
+    if ( ! settings.getBoolean(RobotSettingKey.SEND_COURTESY_MESSAGES)) {
+      return;
+    }
+
+    String courtesyMessage = settings.getString(RobotSettingKey.COURTESY_MESSAGE_STRING);
+
+    // Only send courtesy chats if we haven't already sent them
+    for (ChatMessage chat : state.getChatMessages()) {
+      if ( chat.getMessage().equals(courtesyMessage)) {
+        return;
+      }
+    }
+
+    // Only send courtesy chats to new games
+    if ( state.getAllMoves().size() > 1) {
+      return;
+    }
+
+    LOG.info("Submitting courtesy message to game {}", state.getId());
+    apiProvider.submitChatMessage(state.getId(), courtesyMessage);
+  }
+
   @Override
   public void run() {
     while ( true ) {
@@ -80,6 +110,7 @@ class RobotConsumer implements Runnable {
         // Wait for a state to be available in the queue
         GameState state = producer.takeGame();
         serializeGameState(state);
+        sendCourtesyChat(state);
 
         try {
           // Reconstruct the game state (rack and board)

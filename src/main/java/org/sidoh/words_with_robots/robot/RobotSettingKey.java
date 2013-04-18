@@ -24,7 +24,7 @@ public enum RobotSettingKey {
    * The number of seconds to wait before expiring a game to make room for a new one. This can be
    * set to 0 to disable it.
    */
-  INACTIVE_GAME_TTL(86400),
+  INACTIVE_GAME_TTL(76400),
 
   /**
    * Number of concurrent active games before consumers are weakly preempted, allowing them to run
@@ -46,7 +46,20 @@ public enum RobotSettingKey {
   /**
    * If true, saves serialized game state files to the log directory
    */
-  SAVE_GAME_STATES(true);
+  SAVE_GAME_STATES(true),
+
+  /**
+   * If true, send courtesy messages to opponents at the beginning of a game warning them that they're
+   * playing against a bot
+   */
+  SEND_COURTESY_MESSAGES(true),
+
+  /**
+   * Message sent to new players if enabled
+   */
+  COURTESY_MESSAGE_STRING("Hi! Full disclosure: you're playing against WordsWithRobots, an AI for WWF. "
+                          +"If you're up for the challenge, I would love the opportunity to play with you. "
+                          +"Otherwise, have a lovely day!");
 
   private Object defaultValue;
   private boolean defaultProvided;

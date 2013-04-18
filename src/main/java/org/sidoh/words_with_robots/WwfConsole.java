@@ -188,7 +188,7 @@ public class WwfConsole {
   }
 
   public static void handleCommand() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException {
-    String[] validCommands = { "index", "listUsers", "createRandom", "create", "exit", "setMoveGenAlgo", "dictLookup" };
+    String[] validCommands = { "index", "listUsers", "createRandom", "create", "exit", "setMoveGenAlgo", "dictLookup", "batchGameOver" };
     String command = StdinPrompts.promptForLine("Enter command (" + CollectionsHelper.join(validCommands) + ")");
 
     if ("index".equals(command)) {
@@ -230,6 +230,16 @@ public class WwfConsole {
       List<String> response = api.dictionaryLookup(Arrays.asList(words));
 
       System.out.println("Words not in dictionary: " + response);
+    }
+    else if ("batchGameOver".equals(command)) {
+      String[] ids = StdinPrompts.promptForLine("Enter games to cancel (comma-separated)").split(",");
+
+      for (int i = 0; i < ids.length; i++) {
+        long parsedId = Long.valueOf(ids[i]);
+        GameState state = api.getGameState(parsedId);
+
+        api.makeMove(state, stateHelper.createMoveSubmission(MoveType.GAME_OVER));
+      }
     }
     else {
       System.out.println("invalid command.");
