@@ -87,24 +87,15 @@ class RobotProducer implements Runnable {
    * @return
    */
   protected GameIndex getGameIndex() throws InterruptedException {
-    try {
-      GameIndex index;
-      if ( lastUpdate == 0 ) {
-        index = apiProvider.getGameIndex();
-      }
-      else {
-        index = apiProvider.getGamesWithUpdates(lastUpdate);
-        lastUpdate = (int)(System.currentTimeMillis() / 1000L);
-      }
-      return index;
+    GameIndex index;
+    if ( lastUpdate == 0 ) {
+      index = apiProvider.getGameIndex();
     }
-    catch (ApiRequestException e) {
-      LOG.error("Error requesting game index", e);
-
-      // Sleep to block the caller
-      Thread.sleep(settings.getLong(RobotSettingKey.GAME_INDEX_POLL_PERIOD));
-      return null;
+    else {
+      index = apiProvider.getGamesWithUpdates(lastUpdate);
+      lastUpdate = (int)(System.currentTimeMillis() / 1000L);
     }
+    return index;
   }
 
   @Override
@@ -112,8 +103,14 @@ class RobotProducer implements Runnable {
     while ( true ) {
       try {
         // Fetch the index and find games that have pending moves and that aren't already queued
-        GameIndex index = getGameIndex();
-        if ( index == null ) continue;
+        GameIndex index;
+        try {
+          index = getGameIndex();
+        }
+        catch ( ApiRequestException e ) {
+          LOG.error("Error requesting game index", e);
+          continue;
+        }
 
         int numActiveGames = 0;
         for (GameMeta gameMeta : index.getGames()) {

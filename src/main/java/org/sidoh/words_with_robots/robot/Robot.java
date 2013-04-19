@@ -63,7 +63,7 @@ public class Robot {
       try {
         dictionary.loadDictionary(DictionaryHelper.getDictionaryResource());
         moveGenerator = new IterativeDeepeningMoveGenerator(new GadDagWwfMoveGenerator(dictionary));
-        //moveGenerator = new WwfMinimaxLocal(new GadDagWwfMoveGenerator(dictionary));
+//        moveGenerator = new WwfMinimaxLocal(new GadDagWwfMoveGenerator(dictionary));
       } catch (IOException e) {
         throw new RuntimeException(e);
       }

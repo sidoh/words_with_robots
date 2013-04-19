@@ -14,12 +14,14 @@ import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.ChatMessage;
 import org.sidoh.wwf_api.types.api.GameState;
 import org.sidoh.wwf_api.types.game_state.Rack;
+import org.sidoh.wwf_api.types.game_state.Tile;
 import org.sidoh.wwf_api.util.ThriftSerializationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
