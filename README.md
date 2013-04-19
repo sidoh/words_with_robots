@@ -17,5 +17,6 @@ You should be able to compile/run it with the following:
 
 ```bash
 mvn clean compile assembly:single
-java -classpath $CLASSPATH:target/words_with_robots-0.1-jar-with-dependencies.jar org.sidoh.words_with_robots.robot.Robot <wwf_access_token>
+java -classpath $CLASSPATH:target/words_with_robots-0.1-jar-with-dependencies.jar \
+  org.sidoh.words_with_robots.robot.Robot <wwf_access_token>
 ```
