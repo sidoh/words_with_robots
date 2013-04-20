@@ -228,7 +228,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
   }
 
   protected List<Move> getSortedMoves(AlphaBetaClosure closure) {
-    List<Move> allMoves = CollectionsHelper.asList(generateAllPossibleMoves(closure.getRack(), closure.getBoard()));
+    List<Move> allMoves = Lists.newArrayList(generateAllPossibleMoves(closure.getRack(), closure.getBoard()));
     Collections.sort(allMoves, MoveScoreComparator.rawScoreComparator());
 
     return allMoves;

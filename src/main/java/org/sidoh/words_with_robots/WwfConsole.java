@@ -1,5 +1,6 @@
 package org.sidoh.words_with_robots;
 
+import com.google.common.base.Joiner;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TJSONProtocol;
@@ -63,7 +64,7 @@ public class WwfConsole {
       statePrinter.writeGameState(state, new OutputStreamWriter(System.out));
 
       String[] commands = { "play", "pass", "resign", "back", "chat", "sendEndGame", "printGameState", "replay" };
-      String command = StdinPrompts.promptForLine("enter command (" + CollectionsHelper.join(commands) + ")");
+      String command = StdinPrompts.promptForLine("enter command (" + Joiner.on(',').join(commands) + ")");
 
       if ("back".equals(command)) {
         return;
@@ -183,7 +184,7 @@ public class WwfConsole {
 
   public static void handleCommand() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException {
     String[] validCommands = { "index", "listUsers", "createRandom", "create", "exit", "setMoveGenAlgo", "dictLookup", "batchGameOver" };
-    String command = StdinPrompts.promptForLine("Enter command (" + CollectionsHelper.join(validCommands) + ")");
+    String command = StdinPrompts.promptForLine("Enter command (" + Joiner.on(',').join(validCommands) + ")");
 
     if ("index".equals(command)) {
       handleListCurrentGames();

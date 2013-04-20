@@ -1,5 +1,6 @@
 package org.sidoh.words_with_robots.move_generation;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.MinMaxPriorityQueue;
 import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
@@ -46,7 +47,7 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
     int diffThreshold = params.getInt(WwfMoveGeneratorParamKey.DEFAULT_DIFF_THRESHOLD);
 
     // Generate all possible moves given this game state
-    List<Move> allMoves1 = CollectionsHelper.asList( generateAllPossibleMoves(baseRack, board) );
+    List<Move> allMoves1 = Lists.newArrayList( generateAllPossibleMoves(baseRack, board) );
     LOG.info("Generated " + allMoves1.size() + " possible moves.");
 
     double bestDiff = Double.NEGATIVE_INFINITY;
