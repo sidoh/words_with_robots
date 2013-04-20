@@ -2,6 +2,7 @@ package org.sidoh.words_with_robots.move_generation.params;
 
 import com.google.common.collect.Maps;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
+import org.sidoh.words_with_robots.move_generation.swap_strategies.SwapStrategy;
 
 /**
  * Defines parameters to be used (in general) by words with friends move generators
@@ -32,7 +33,12 @@ public enum WwfMoveGeneratorParamKey implements MoveGeneratorParamKey {
   /**
    * REQUIRED PARAM! The GameState for the corresponding board.
    */
-  GAME_STATE;
+  GAME_STATE,
+
+  /**
+   * A strategy that decides when we should swap
+   */
+  SWAP_STRATEGY(SwapStrategy.swapWhenNoAlternatives());
 
   private final Object defaultValue;
   private final boolean required;

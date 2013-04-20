@@ -55,7 +55,7 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
     producerThread.start();
 
     // Wait until execution completes or we run out of time
-    while ( !producer.isComplete() && !isExpired(startTime, preemptionContext, params) ) {
+    while ( !producer.isComplete() && !isExpired(producer, startTime, preemptionContext, params) ) {
       try {
         Thread.sleep(100L);
       } catch (InterruptedException e) {
@@ -128,12 +128,19 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
   /**
    * Determine whether or not execution is expired
    *
+   *
+   * @param producer
    * @param startTime time at which execution began
    * @param pcontext preemption context
    * @param params params called
    * @return
    */
-  protected static boolean isExpired(long startTime, PreemptionContext pcontext, MoveGeneratorParams params) {
+  protected static boolean isExpired(IterativeDeepeningProducer producer, long startTime, PreemptionContext pcontext, MoveGeneratorParams params) {
+    // Don't expire if we haven't found a move yet
+    if ( producer.getBestMove() == null ) {
+      return false;
+    }
+
     long minRunTime = params.getLong(IterativeDeepeningParamKey.MIN_EXECUTION_TIME_IN_MS);
     long maxRunTime = params.getLong(IterativeDeepeningParamKey.MAX_EXECUTION_TIME_IN_MS);
 

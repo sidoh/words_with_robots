@@ -24,7 +24,9 @@ class RobotPreempter implements Runnable {
       if ( producer.numActiveGames() >= preemptionThreshold ) {
         for ( int i = 0; i < (preemptionThreshold - numActiveConsumers()); i++ ) {
           LOG.info("Weak preempting a consumer");
-          consumers.get(i).weakPreempt();
+          if (consumers.get(i).isOccupied()) {
+            consumers.get(i).weakPreempt();
+          }
         }
       }
 

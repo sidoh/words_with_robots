@@ -7,12 +7,14 @@ import org.sidoh.words_with_robots.move_generation.params.FixedDepthParamKey;
 import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.PreemptionContext;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
+import org.sidoh.words_with_robots.move_generation.swap_strategies.SwapStrategy;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
 import org.sidoh.wwf_api.types.api.MoveType;
 import org.sidoh.wwf_api.types.game_state.Rack;
+import org.sidoh.wwf_api.types.game_state.Tile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,12 +41,21 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
   @Override
   public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
     // Perform search
-    AlphaBetaClosure closure = alphaBetaSearch(
-      AlgorithmSettings.fromParams(params),
-      AlphaBetaClosure.newClosure(params));
+    AlgorithmSettings settings = AlgorithmSettings.fromParams(params);
+    AlphaBetaClosure inputClosure = AlphaBetaClosure.newClosure(params);
+    AlphaBetaClosure closure = alphaBetaSearch(settings, inputClosure);
 
+    List<Tile> tilesToSwap = settings.getSwapStrategy().getTilesToSwap(closure.getState(), closure.getReturnMove());
+    if ( tilesToSwap.size() > 0 ) {
+      closure.setReturnMove(Move.swap(tilesToSwap));
+    }
+
+    // Swap if strategy decided we should
+    if ( closure.getReturnMove() != null && closure.getReturnMove().getMoveType() == MoveType.SWAP ) {
+      LOG.info("swap strategy decided we should SWAP: {}", closure.getReturnMove());
+    }
     // Pass if we have to
-    if ( closure.getReturnMove() == null ) {
+    else if ( closure.getReturnMove() == null || closure.getReturnMove().getMoveType() == MoveType.PASS ) {
       closure.setReturnMove(Move.pass());
 
       LOG.info("couldn't generate move -- forcing a PASS. ab-search returned {}", closure.getReturnValue());
@@ -369,12 +380,14 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
     private final int minScore;
     private final int branchingFactorLimit;
     private final PreemptionContext context;
+    private final SwapStrategy swapStrategy;
 
-    private AlgorithmSettings(int moveCacheSize, int minScore, int branchingFactorLimit, PreemptionContext context) {
+    private AlgorithmSettings(int moveCacheSize, int minScore, int branchingFactorLimit, PreemptionContext context, SwapStrategy swapStrategy) {
       this.moveCacheSize = moveCacheSize;
       this.minScore = minScore;
       this.branchingFactorLimit = branchingFactorLimit;
       this.context = context;
+      this.swapStrategy = swapStrategy;
     }
 
     public static AlgorithmSettings fromParams(MoveGeneratorParams params) {
@@ -382,7 +395,12 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
         params.getInt(FixedDepthParamKey.MOVE_CACHE_SIZE),
         params.getInt(FixedDepthParamKey.MIN_SCORE),
         params.getInt(FixedDepthParamKey.BRANCHING_FACTOR_LIMIT),
-        (PreemptionContext) params.get(FixedDepthParamKey.PREEMPTION_CONTEXT));
+        (PreemptionContext) params.get(FixedDepthParamKey.PREEMPTION_CONTEXT),
+        (SwapStrategy)params.get(WwfMoveGeneratorParamKey.SWAP_STRATEGY));
+    }
+
+    public SwapStrategy getSwapStrategy() {
+      return swapStrategy;
     }
 
     public int getMoveCacheSize() {

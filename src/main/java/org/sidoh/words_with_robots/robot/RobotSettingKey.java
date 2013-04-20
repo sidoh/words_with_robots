@@ -57,7 +57,7 @@ public enum RobotSettingKey {
   /**
    * Message sent to new players if enabled
    */
-  COURTESY_MESSAGE_STRING("Hi! Full disclosure: you're playing against WordsWithRobots, an AI for WWF. "
+  COURTESY_MESSAGE_STRING("Hi! Full disclosure: you're playing against WordsWithRobots, an artificial intelligence for WWF. "
                           +"If you're up for the challenge, I would love the opportunity to play with you. "
                           +"Otherwise, have a lovely day!");
 

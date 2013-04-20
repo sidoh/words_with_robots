@@ -100,76 +100,88 @@ class RobotProducer implements Runnable {
 
   @Override
   public void run() {
-    while ( true ) {
-      try {
-        // Fetch the index and find games that have pending moves and that aren't already queued
-        GameIndex index;
+    try {
+      while ( true ) {
         try {
-          index = getGameIndex();
-        }
-        catch ( ApiRequestException e ) {
-          LOG.error("Error requesting game index", e);
-          continue;
-        }
-
-        int numActiveGames = 0;
-        for (GameMeta gameMeta : index.getGames()) {
-          long gameId = gameMeta.getId();
-
-          if ( !gameMeta.isOver() ) {
-            numActiveGames++;
+          // Fetch the index and find games that have pending moves and that aren't already queued
+          GameIndex index;
+          try {
+            index = getGameIndex();
           }
-
-          // Only consider games where we can actually make a move
-          boolean shouldSkip =
-            gameMeta.isOver()
-              || gameMeta.getCurrentMoveUserId() != index.getUser().getId()
-              || gameMeta.getUsersByIdSize() == 1;
-
-          if ( shouldSkip ) {
-            // Cancel expired games
-            if ( shouldCancelGame(gameMeta) ) {
-              LOG.info("Cancelling game: {}", gameId);
-              GameState state = apiProvider.getGameState(gameId);
-              apiProvider.makeMove(state, stateHelper.createMoveSubmission(MoveType.GAME_OVER));
-            }
+          catch ( ApiRequestException e ) {
+            LOG.error("Error requesting game index", e);
             continue;
           }
 
-          if ( !activeGames.contains(gameId) && activeGames.size() < settings.getInteger(RobotSettingKey.MAX_GAMES) ) {
-            LOG.info("Added game to processing queue");
+          int numActiveGames = 0;
+          for (GameMeta gameMeta : index.getGames()) {
+            long gameId = gameMeta.getId();
 
-            GameState state = apiProvider.getGameState(gameId);
-            gameStateHistory.put(state.getId(), state);
-            gameScoreHistory.put(state.getId(), stateHelper.getScoreStatus(index.getUser(), state));
-            queue.offer(state);
-            activeGames.add(gameId);
+            if ( !gameMeta.isOver() ) {
+              numActiveGames++;
+            }
+
+            // Only consider games where we can actually make a move
+            boolean shouldSkip =
+              gameMeta.isOver()
+                || gameMeta.getCurrentMoveUserId() != index.getUser().getId()
+                || gameMeta.getUsersByIdSize() == 1;
+
+            if ( shouldSkip ) {
+              // Cancel expired games
+              if ( shouldCancelGame(gameMeta) ) {
+                LOG.info("Cancelling game: {}", gameId);
+                GameState state = apiProvider.getGameState(gameId);
+                apiProvider.makeMove(state, stateHelper.createMoveSubmission(MoveType.GAME_OVER));
+              }
+              continue;
+            }
+
+            if ( !activeGames.contains(gameId) && activeGames.size() < settings.getInteger(RobotSettingKey.MAX_GAMES) ) {
+              LOG.info("Added game to processing queue");
+
+              GameState state;
+              try {
+                state = apiProvider.getGameState(gameId);
+              }
+              catch ( ApiRequestException e ) {
+                LOG.error("Error fetching game state", e);
+                break;
+              }
+              gameStateHistory.put(state.getId(), state);
+              gameScoreHistory.put(state.getId(), stateHelper.getScoreStatus(index.getUser(), state));
+              queue.offer(state);
+              activeGames.add(gameId);
+            }
+            else {
+              LOG.debug("Skipped active game {}. Active games = {}.", gameId, activeGames);
+            }
           }
-          else {
-            LOG.debug("Skipped active game {}. Active games = {}.", gameId, activeGames);
+
+          // Start new games if we have fewer active games than we'd like.
+          for ( int i = 0; i < (settings.getInteger(RobotSettingKey.MAX_GAMES) - numActiveGames); i++) {
+            apiProvider.createRandomGame();
           }
+
+          // Log score stats
+          CountingHashMap<GameScoreStatus> statusCounts = CountingHashMap.create();
+          for (GameScoreStatus gameScoreStatus : gameScoreHistory.values()) {
+            statusCounts.increment(gameScoreStatus);
+          }
+
+          LOG.debug("Active game status summary: winning {}, losing {}, tied {}.",
+              statusCounts.getCount(GameScoreStatus.WINNING),
+              statusCounts.getCount(GameScoreStatus.LOSING),
+              statusCounts.getCount(GameScoreStatus.TIED));
+
+          Thread.sleep(settings.getLong(RobotSettingKey.GAME_INDEX_POLL_PERIOD));
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
         }
-
-        // Start new games if we have fewer active games than we'd like.
-        for ( int i = 0; i < (settings.getInteger(RobotSettingKey.MAX_GAMES) - numActiveGames); i++) {
-          apiProvider.createRandomGame();
-        }
-
-        // Log score stats
-        CountingHashMap<GameScoreStatus> statusCounts = CountingHashMap.create();
-        for (GameScoreStatus gameScoreStatus : gameScoreHistory.values()) {
-          statusCounts.increment(gameScoreStatus);
-        }
-
-        LOG.debug("Active game status summary: winning {}, losing {}, tied {}.",
-            statusCounts.getCount(GameScoreStatus.WINNING),
-            statusCounts.getCount(GameScoreStatus.LOSING),
-            statusCounts.getCount(GameScoreStatus.TIED));
-
-        Thread.sleep(settings.getLong(RobotSettingKey.GAME_INDEX_POLL_PERIOD));
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
       }
+    }
+    finally {
+      LOG.info("Exiting producer loop");
     }
   }
 
