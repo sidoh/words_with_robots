@@ -8,7 +8,10 @@ import org.sidoh.words_with_robots.move_generation.params.FixedDepthParamKey;
 import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.PreemptionContext;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
+import org.sidoh.words_with_robots.util.io.StatePrinter;
+import org.sidoh.wwf_api.MoveValidationException;
 import org.sidoh.wwf_api.StatefulApiProvider;
+import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.ChatMessage;
@@ -36,6 +39,9 @@ class RobotConsumer implements Runnable {
    * Wouldn't wanna waste all that time re-generating them :)
    */
   private static final Map<Long, Move> moveCache = Maps.newHashMap();
+
+  private static final GameStateHelper stateHelper = GameStateHelper.getInstance();
+  private static final StatePrinter statePrinter = StatePrinter.getInstance();
 
   private final RobotSettings settings;
   private final RobotProducer producer;
@@ -116,8 +122,8 @@ class RobotConsumer implements Runnable {
 
         try {
           // Reconstruct the game state (rack and board)
-          Rack rack = Robot.stateHelper.getCurrentPlayerRack(state);
-          WordsWithFriendsBoard board = Robot.stateHelper.createBoardFromState(state);
+          Rack rack = stateHelper.getCurrentPlayerRack(state);
+          WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
           // Generate a move
           MoveGeneratorParams params = buildParams(state);
@@ -127,8 +133,15 @@ class RobotConsumer implements Runnable {
           moveCache.put(state.getId(), generatedMove);
 
           // Submit the generated move
-          apiProvider.makeMove(state, Robot.stateHelper.createMoveSubmissionFromPlay(generatedMove));
-          moveCache.remove(state.getId());
+          try {
+            GameState updatedState = apiProvider.makeMove(state, stateHelper.createMoveSubmissionFromPlay(generatedMove));
+            moveCache.remove(state.getId());
+
+            LOG.info("Game state after move:\n{}", statePrinter.getGameStateAsString(updatedState));
+          }
+          catch (MoveValidationException e) {
+            LOG.error("Permanent error submitting move -- generated move was invalid", e);
+          }
 
           // Log stats
           Map<String, Object> stats = (Map<String, Object>) params.get(WwfMoveGeneratorParamKey.GAME_STATS);

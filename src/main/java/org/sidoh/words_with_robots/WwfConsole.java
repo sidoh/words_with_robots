@@ -13,6 +13,7 @@ import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 import org.sidoh.words_with_robots.move_generation.eval.SummingEvalFunction;
 import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
+import org.sidoh.words_with_robots.util.io.StatePrinter;
 import org.sidoh.words_with_robots.util.io.StdinPrompts;
 import org.sidoh.wwf_api.AccessTokenRetriever;
 import org.sidoh.wwf_api.StatefulApiProvider;
@@ -33,6 +34,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -51,22 +53,14 @@ public class WwfConsole {
     = new IterativeDeepeningMoveGenerator(allMovesGen);
   static StatefulApiProvider api;
   static final GameStateHelper stateHelper = GameStateHelper.getInstance();
+  static final StatePrinter statePrinter = StatePrinter.getInstance();
 
   public static void handleGameSelection(User player, GameMeta meta) {
     while (true) {
       GameState state = api.getGameState(meta.getId());
       WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
-      printScores(state);
-      System.out.println();
-
-      System.out.println(board);
-      System.out.println();
-
-      printRacks(state);
-
-      System.out.println();
-      System.out.printf("Remaining tiles: %s\n", rackToString(state.getRemainingTiles()));
+      statePrinter.writeGameState(state, new OutputStreamWriter(System.out));
 
       String[] commands = { "play", "pass", "resign", "back", "chat", "sendEndGame", "printGameState", "replay" };
       String command = StdinPrompts.promptForLine("enter command (" + CollectionsHelper.join(commands) + ")");
@@ -258,43 +252,6 @@ public class WwfConsole {
         state.getMeta().getUsersById().get(chatMessage.getUserId()).getName(),
         chatMessage.getMessage());
     }
-  }
-
-  public static void printScores(GameState state) {
-    System.out.printf("%20s\n", "SCORES");
-
-    User user1 = state.getMeta().getUsersById().get(state.getMeta().getCreatedByUserId());
-    User user2 = stateHelper.getOtherUser(user1, state);
-    Long id1 = user1.getId();
-    Long id2 = user2 == null ? null : user2.getId();
-
-    System.out.printf("%-20s %-20s\n", user1.getName(), user2 == null ? "(waiting for opponent)" : user2.getName());
-    System.out.printf("%-20d %-20d\n", state.getScores().get(id1), state.getScores().get(id2));
-  }
-
-  public static void printRacks(GameState state) {
-    User user1 = state.getMeta().getUsersById().get(state.getMeta().getCreatedByUserId());
-    User user2 = stateHelper.getOtherUser(user1, state);
-
-    System.out.printf("%20s's rack: %s\n", user1.getName(), rackToString(state.getRacks().get(user1.getId())));
-
-    if (user2 != null) {
-      System.out.printf("%20s's rack: %s\n", user2.getName(), rackToString(state.getRacks().get(user2.getId())));
-    }
-  }
-
-  public static String rackToString(List<Tile> tiles) {
-    StringBuilder b = new StringBuilder();
-
-    for (Tile tile : tiles) {
-      b.append(tile.getLetter().getValue()).append(", ");//.append("[").append(tile.getValue()).append("], ");
-    }
-
-    if (b.length() > 0) {
-      b.setLength(b.length() - 2);
-    }
-
-    return b.toString();
   }
 
   public static void printGameMetaInfo(int num, User player, GameMeta meta) {
