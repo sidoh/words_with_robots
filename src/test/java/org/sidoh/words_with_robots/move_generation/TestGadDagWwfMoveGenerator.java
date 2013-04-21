@@ -38,8 +38,10 @@ public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
     Rack rack = buildRack("BOOPY");
 
     playWord(board, 7, 7, "HADOOPY", WordOrientation.HORIZONTAL, true);
+    Move.Result generatedResult = board.scoreMove(gen.generateMove(rack, board, params));
+    Move.Result expectedResult = playWord(board, 8, 8, "BOOPY", WordOrientation.HORIZONTAL, false);
 
-    Move.Result result = board.move(gen.generateMove(rack, board, params));
+    assertEquals(expectedResult, generatedResult);
   }
 
   public void testDoubleBlank() {
@@ -54,7 +56,10 @@ public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
 
     playWord(board, 7, 7, "AT", WordOrientation.HORIZONTAL, true);
 
-    Move move = gen.generateMove(rack, board, params);
+    Move.Result generatedResult = board.move(gen.generateMove(rack, board, params));
+    assertEquals("Should generate the word 'ZAZZ'",
+      "ZAZZ",
+      generatedResult.getMainWord());
   }
 
   public void testBlank() {

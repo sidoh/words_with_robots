@@ -172,10 +172,7 @@ public class WordsWithRobotsTestCase extends TestCase {
     Rack rack = new Rack().setCapacity(7);
 
     for (int i = 0; i < letters.length(); i++) {
-      char letter = letters.charAt(i);
-      int value = WordsWithFriendsBoard.TILE_VALUES.get(letter);
-
-      rack.addToTiles(new Tile().setId(tileId++).setLetter(new Letter().setValue(String.valueOf(letter))).setValue(value));
+      rack.addToTiles(TileBuilder.getTile(letters.substring(i, i+1)));
     }
 
     return rack;

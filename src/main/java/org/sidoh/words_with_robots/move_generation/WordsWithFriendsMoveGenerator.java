@@ -1,5 +1,7 @@
 package org.sidoh.words_with_robots.move_generation;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
 import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
@@ -151,7 +153,7 @@ public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsW
    * @return
    */
   protected static Set<Rack> expand1Blank(Rack baseRack, Set<Letter> choices, Tile blank1) {
-    Set<Rack> ret = new HashSet<Rack>();
+    Set<Rack> ret = Sets.newLinkedHashSet();
 
     for (Letter choice : choices) {
       Rack val = baseRack.deepCopy();
@@ -172,8 +174,8 @@ public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsW
    * @return
    */
   protected static Set<Rack> expand2Blanks(Rack baseRack, Set<Letter> choices, Tile blank1, Tile blank2) {
-    Set<Rack> vals = new HashSet<Rack>(expand1Blank(baseRack, choices, blank1));
-    Set<Rack> ret = new HashSet<Rack>();
+    Set<Rack> vals = Sets.newLinkedHashSet(expand1Blank(baseRack, choices, blank1));
+    Set<Rack> ret = Sets.newLinkedHashSet();
 
     for (Rack br : vals) {
       for (Letter choice : choices) {
@@ -184,7 +186,7 @@ public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsW
       }
     }
 
-    return vals;
+    return ret;
   }
 
   /**
