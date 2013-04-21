@@ -186,7 +186,7 @@ public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
       assertTrue("move made should be worth no more than the generated move",
         move.getPoints() <= generatedMove.getResult().getScore());
 
-      Move actualMove = stateHelper.buildGameStateMove(move);
+      Move actualMove = stateHelper.buildGameStateMove(move, board);
       board.move(actualMove);
 
       state = stateHelper.applyMove(state, actualMove);

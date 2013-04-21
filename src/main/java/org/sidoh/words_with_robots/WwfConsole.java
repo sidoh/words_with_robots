@@ -149,7 +149,7 @@ public class WwfConsole {
 
         for (MoveData move : state.getAllMoves()) {
           if ( move.getMoveType() == MoveType.PLAY ) {
-            replayBoard.move(stateHelper.buildGameStateMove(move));
+            replayBoard.move(stateHelper.buildGameStateMove(move, replayBoard));
             System.out.println(replayBoard);
 
             StdinPrompts.promptForLine("press enter to continue.");
