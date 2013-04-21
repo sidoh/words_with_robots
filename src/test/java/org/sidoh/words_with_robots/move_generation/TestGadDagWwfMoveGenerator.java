@@ -138,7 +138,10 @@ public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
 
     Rack rack = buildRack("LQIIINR");
 
-    Move.Result result = board.move(gen.generateMove(rack, board, params));
+    Move.Result expectedResult = playWord(board, 2, 12, "N", WordOrientation.HORIZONTAL, false);
+    Move.Result generatedResult = board.scoreMove(gen.generateMove(rack, board, params));
+
+    assertEquals(expectedResult, generatedResult);
   }
 
   public void testInitMove() {
