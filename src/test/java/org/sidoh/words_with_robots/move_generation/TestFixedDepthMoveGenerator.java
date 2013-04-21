@@ -45,8 +45,8 @@ public class TestFixedDepthMoveGenerator extends WordsWithRobotsTestCase {
     board.move(move);
 
     // Here, the move should be 'TUB' on the B in 'BIGOT'. This is a lower scoring move than
-    // the alternative, but it blocks the user from getting a very beneficial play by playing
-    // 'TABARETS'
+    // the alternative, but it blocks the opponent from getting a very beneficial play by playing
+    // 'TABARETS' across the same B.
     assertEquals(move.getResult().getMainWord(), "TUB");
   }
 
