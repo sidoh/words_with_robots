@@ -2,7 +2,6 @@ package org.sidoh.words_with_robots;
 
 import com.google.common.collect.Lists;
 import junit.framework.TestCase;
-
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TJSONProtocol;
@@ -20,7 +19,6 @@ import org.sidoh.wwf_api.util.ThriftSerializationHelper;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
