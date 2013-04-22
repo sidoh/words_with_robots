@@ -24,7 +24,7 @@ public class MinScoreThresholdSwapStrategy extends SwapStrategy {
 
   @Override
   public List<Tile> getTilesToSwap(GameState state, Move alternative) {
-    if (alternative.getMoveType() != MoveType.PLAY || alternative.getResult().getScore() < threshold) {
+    if (alternative == null || alternative.getMoveType() != MoveType.PLAY || alternative.getResult().getScore() < threshold) {
       Rack playerRack = stateHelper.getCurrentPlayerRack(state);
 
       return swapLowestScoring(state, playerRack.getTiles(), playerRack.getTilesSize());

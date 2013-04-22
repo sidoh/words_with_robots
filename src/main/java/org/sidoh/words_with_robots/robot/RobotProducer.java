@@ -138,7 +138,7 @@ class RobotProducer implements Runnable {
             }
 
             if ( !activeGames.contains(gameId) && activeGames.size() < settings.getInteger(RobotSettingKey.MAX_GAMES) ) {
-              LOG.info("Added game to processing queue");
+              LOG.info("Added game to processing queue: {}", gameId);
 
               GameState state;
               try {

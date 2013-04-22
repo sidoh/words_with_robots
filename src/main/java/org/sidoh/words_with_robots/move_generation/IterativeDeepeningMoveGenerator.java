@@ -35,6 +35,7 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
   public Move generateMove(Rack rack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
     LOG.info("Generating move. Starting at depth 2");
     boolean verboseStats = params.getBoolean(IterativeDeepeningParamKey.VERBOSE_STATS_ENABLED);
+    GameState state = (GameState) params.get(WwfMoveGeneratorParamKey.GAME_STATE);
     Map<String, Object> stats = (Map<String, Object>)params.get(WwfMoveGeneratorParamKey.GAME_STATS);
 
     // Get our preemption context, which will allow us to preempt the underlying fixed store
@@ -81,7 +82,9 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
     Move bestMove = producer.getBestMove();
 
     if ( verboseStats ) {
-      stats.put(getStatsKey("move_rank"), findMoveRank(rack, board, bestMove));
+      int moveRank = findMoveRank(rack, board, bestMove);
+      stats.put(getStatsKey("move_rank"), moveRank);
+      stats.put(getStatsKey("turn_index"), state.getAllMoves().size());
     }
 
     return producer.getBestMove();
