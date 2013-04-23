@@ -125,9 +125,16 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
 
     Move returnMove = null;
     AlphaBetaClosure returnClosure = null;
-    MinMaxPriorityQueue<CachedMove> moveCache = MinMaxPriorityQueue
-      .maximumSize(settings.getMoveCacheSize())
-      .create();
+    MinMaxPriorityQueue<CachedMove> moveCache;
+
+    if ( settings.getMoveCacheSize() > 0 ) {
+      moveCache = MinMaxPriorityQueue
+        .maximumSize(settings.getMoveCacheSize())
+        .create();
+    }
+    else {
+      moveCache = null;
+    }
 
     LOG.debug("At depth {}, considering {} possible moves", closure.getRemainingDepth(), moves.size());
 
@@ -174,7 +181,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
 
       // Offer the result of this call to the cache, which may prevent generating moves for future
       // calls. Only cache moves that are actually moves
-      if ( callClosure.getReturnMove() != null && callClosure.getReturnMove().getMoveType() != MoveType.PASS ) {
+      if ( moveCache != null && callClosure.getReturnMove() != null && callClosure.getReturnMove().getMoveType() != MoveType.PASS ) {
         moveCache.offer( CachedMove.fromClosure(callClosure) );
       }
 

@@ -37,6 +37,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -61,7 +62,9 @@ public class WwfConsole {
       GameState state = api.getGameState(meta.getId());
       WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
-      statePrinter.writeGameState(state, new OutputStreamWriter(System.out));
+      StringWriter out = new StringWriter();
+      statePrinter.writeGameState(state, out);
+      System.out.println(out.toString());
 
       String[] commands = { "play", "pass", "resign", "back", "chat", "sendEndGame", "printGameState", "replay" };
       String command = StdinPrompts.promptForLine("enter command (" + Joiner.on(',').join(commands) + ")");

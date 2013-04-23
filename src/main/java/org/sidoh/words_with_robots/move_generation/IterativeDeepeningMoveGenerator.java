@@ -99,24 +99,7 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
    * @return
    */
   protected int findMoveRank(Rack rack, WordsWithFriendsBoard board, Move move) {
-    if ( move == null || move.getMoveType() != MoveType.PLAY ) {
-      return -1;
-    }
-
-    Set<Integer> uniqueScores = Sets.newHashSet();
-    for (Move possibleMove : allMovesGenerator.generateAllPossibleMoves(rack, board)) {
-      uniqueScores.add(possibleMove.getResult().getScore());
-    }
-    List<Integer> scores = Lists.newArrayList(uniqueScores);
-    Collections.sort(scores, Collections.reverseOrder());
-    LOG.info("Sorted possible scores: {}", scores);
-
-    if ( scores.size() == 0 ) {
-      return -1;
-    }
-    else {
-      return scores.indexOf(move.getResult().getScore());
-    }
+    return getMoveScoreRank(allMovesGenerator.generateAllPossibleMoves(rack, board), move);
   }
 
   /**

@@ -38,7 +38,7 @@ public enum WwfMoveGeneratorParamKey implements MoveGeneratorParamKey {
   /**
    * A strategy that decides when we should swap
    */
-  SWAP_STRATEGY(SwapStrategy.minScoreThreshold());
+  SWAP_STRATEGY(SwapStrategy.neverSwap());
 
   private final Object defaultValue;
   private final boolean required;

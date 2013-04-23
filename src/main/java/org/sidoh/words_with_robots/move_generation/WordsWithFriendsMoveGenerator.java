@@ -9,6 +9,7 @@ import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.TileBuilder;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
+import org.sidoh.wwf_api.types.api.MoveType;
 import org.sidoh.wwf_api.types.game_state.Letter;
 import org.sidoh.wwf_api.types.game_state.Rack;
 import org.sidoh.wwf_api.types.game_state.Tile;
@@ -85,6 +86,34 @@ public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsW
           return new AllMovesIterator(baseRack, board);
         }
       };
+    }
+  }
+
+  /**
+   * Returns the rank of the provided move in relation to a list of all moves.
+   *
+   * @param allMoves all moves possible
+   * @param move the move in question
+   * @return
+   */
+  public int getMoveScoreRank(Iterable<Move> allMoves, Move move) {
+    if ( move == null || move.getMoveType() != MoveType.PLAY ) {
+      return -1;
+    }
+
+    Set<Integer> uniqueScores = Sets.newHashSet();
+    for (Move possibleMove : allMoves) {
+      uniqueScores.add(possibleMove.getResult().getScore());
+    }
+    List<Integer> scores = Lists.newArrayList(uniqueScores);
+    Collections.sort(scores, Collections.reverseOrder());
+    LOG.debug("Sorted possible scores: {}", scores);
+
+    if ( scores.size() == 0 ) {
+      return -1;
+    }
+    else {
+      return scores.indexOf(move.getResult().getScore());
     }
   }
 
