@@ -121,7 +121,7 @@ public class StatsCollector {
     racks.put(stateHelper.getOtherUser(currentUser, state).getId(), bag.pullTiles(WordsWithFriendsBoard.TILES_PER_PLAYER));
 
     for (MoveData moveData : state.getAllMoves()) {
-      if ( moveData.getMoveType() == MoveType.PLAY && moveData.getTiles().size() != 0 ) {
+      if ( moveData.getMoveType() == MoveType.PLAY && moveData.getTiles() != null && moveData.getTiles().size() != 0 ) {
         Move move = stateHelper.buildGameStateMove(moveData, board);
         board.scoreMove(move);
 

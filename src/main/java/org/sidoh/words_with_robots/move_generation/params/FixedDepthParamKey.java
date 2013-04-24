@@ -27,7 +27,7 @@ public enum FixedDepthParamKey implements MoveGeneratorParamKey {
    * time, but comes at the cost of loss of information (meaning potentially sub-optimal moves will
    * be generated).
    */
-  BRANCHING_FACTOR_LIMIT(5),
+  BRANCHING_FACTOR_LIMIT(20),
 
   /**
    * FixedDepthMoveGenerator will look for this signal at every node in the search tree. If it's set
