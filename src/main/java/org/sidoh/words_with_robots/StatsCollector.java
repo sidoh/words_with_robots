@@ -141,13 +141,15 @@ public class StatsCollector {
 
         board.move(move);
       }
-      if ( moveData.getMoveType() == MoveType.PLAY || moveData.getMoveType() == MoveType.SWAP ) {
-        List<Tile> rack = racks.get(currentUser.getId());
-        rack.removeAll(moveData.getTiles());
-        rack.addAll(bag.pullTiles(Math.min(bag.getRemainingTiles().size(), moveData.getTiles().size())));
-      }
-      if ( moveData.getMoveType() == MoveType.SWAP ) {
-        bag.returnTiles(moveData.getTiles());
+      if ( moveData.getTiles() != null ) {
+        if ( moveData.getMoveType() == MoveType.PLAY || moveData.getMoveType() == MoveType.SWAP ) {
+          List<Tile> rack = racks.get(currentUser.getId());
+          rack.removeAll(moveData.getTiles());
+          rack.addAll(bag.pullTiles(Math.min(bag.getRemainingTiles().size(), moveData.getTiles().size())));
+        }
+        if ( moveData.getMoveType() == MoveType.SWAP ) {
+          bag.returnTiles(moveData.getTiles());
+        }
       }
 
       currentUser = stateHelper.getOtherUser(currentUser, state);
