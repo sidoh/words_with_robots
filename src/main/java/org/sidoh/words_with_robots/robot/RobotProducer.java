@@ -7,6 +7,7 @@ import org.sidoh.wwf_api.ApiRequestException;
 import org.sidoh.wwf_api.StatefulApiProvider;
 import org.sidoh.wwf_api.game_state.GameScoreStatus;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
+import org.sidoh.wwf_api.parser.ParserException;
 import org.sidoh.wwf_api.types.api.GameIndex;
 import org.sidoh.wwf_api.types.api.GameMeta;
 import org.sidoh.wwf_api.types.api.GameState;
@@ -148,6 +149,11 @@ class RobotProducer implements Runnable {
                 LOG.error("Error fetching game state", e);
                 break;
               }
+              catch ( ParserException e ) {
+                LOG.error("Error parsing game state response -- hopefully this is transient", e);
+                break;
+              }
+
               gameStateHistory.put(state.getId(), state);
               gameScoreHistory.put(state.getId(), stateHelper.getScoreStatus(index.getUser(), state));
               queue.offer(state);
