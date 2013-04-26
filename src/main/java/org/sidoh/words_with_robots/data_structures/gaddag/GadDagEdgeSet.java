@@ -1,70 +1,26 @@
 package org.sidoh.words_with_robots.data_structures.gaddag;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Set;
 
-public final class GadDagEdgeSet implements Set<GadDagEdge> {
-  private final Map<Byte, GadDagEdge> edges
-          = new HashMap<Byte, GadDagEdge>();
+/**
+ *
+ */
+public abstract class GadDagEdgeSet implements Set<GadDagEdge> {
+  /**
+   *
+   * @param letter
+   * @return true if this set contains an outgoing edge for the provided letter
+   */
+  public abstract boolean containsEdgeForLetter(char letter);
 
-  public boolean containsEdgeForLetter(Byte letter) {
-    return edges.containsKey(letter);
-  }
-
-  public GadDagEdge getEdgeForLetter(Byte letter) {
-    return edges.get(letter);
-  }
-
-  @Override
-  public int size() {
-    return edges.size();
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return edges.isEmpty();
-  }
-
-  @Override
-  public boolean contains(Object o) {
-    return edges.values().contains(o);
-  }
-
-  @Override
-  public Iterator<GadDagEdge> iterator() {
-    return edges.values().iterator();
-  }
-
-  @Override
-  public Object[] toArray() {
-    return edges.values().toArray();
-  }
-
-  @Override
-  public <T> T[] toArray(T[] ts) {
-    return edges.values().toArray(ts);
-  }
-
-  @Override
-  public boolean add(GadDagEdge gadDagEdge) {
-    if (edges.containsKey(gadDagEdge.getDestinationLetter())) {
-      return false;
-    }
-
-    edges.put(gadDagEdge.getDestinationLetter(), gadDagEdge);
-    return true;
-  }
-
-  @Override
-  public boolean remove(Object o) {
-    if (! edges.containsValue(o)) return false;
-    edges.remove(((GadDagEdge)o).getDestinationLetter());
-    return true;
-  }
-
-  @Override
-  public boolean containsAll(Collection<?> objects) {
-    return edges.values().containsAll(objects);
-  }
+  /**
+   * Given a letter, find the corresponding outgoing edge.
+   *
+   * @param letter
+   * @return
+   */
+  public abstract GadDagEdge getEdgeForLetter(char letter);
 
   @Override
   public boolean addAll(Collection<? extends GadDagEdge> gadDagEdges) {
@@ -74,6 +30,10 @@ public final class GadDagEdgeSet implements Set<GadDagEdge> {
     }
     return changed;
   }
+
+  //
+  // Operations not supported by GadDagEdgeSet
+  //
 
   @Override
   public boolean retainAll(Collection<?> objects) {
@@ -87,6 +47,26 @@ public final class GadDagEdgeSet implements Set<GadDagEdge> {
 
   @Override
   public void clear() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Object[] toArray() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public <T> T[] toArray(T[] ts) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean remove(Object o) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean containsAll(Collection<?> objects) {
     throw new UnsupportedOperationException();
   }
 }

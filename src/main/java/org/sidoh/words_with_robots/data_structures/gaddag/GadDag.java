@@ -1,5 +1,7 @@
 package org.sidoh.words_with_robots.data_structures.gaddag;
 
+import org.sidoh.words_with_robots.data_structures.BitFieldLetterSet;
+import org.sidoh.words_with_robots.data_structures.LetterSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,11 +12,14 @@ import java.io.Reader;
 public class GadDag extends GraphForGadDag {
   private static final Logger LOG = LoggerFactory.getLogger(GadDag.class);
 
+  // This is used to maintain which letters nodes have as outgoing edges
+  private static final LetterSet.Factory LETTER_SET_FACTORY = new BitFieldLetterSet.Factory();
+
   // State that only has a pointer to initial state
   public static final long NULL_STATE = -1;
 
   public static final long INITIAL_STATE = 0;
-  public static final byte CONCAT_OPERATOR = 0;
+  public static final char CONCAT_OPERATOR = 91;
 
   private long stateCounter = 1;
   private final GadDagEdge initEdge;
@@ -24,7 +29,7 @@ public class GadDag extends GraphForGadDag {
     addVertex(INITIAL_STATE);
     addVertex(NULL_STATE);
 
-    this.initEdge = new GadDagEdge((byte)-1, false);
+    this.initEdge = new GadDagEdge((char)92, LETTER_SET_FACTORY);
 
     addEdge(NULL_STATE, INITIAL_STATE, initEdge);
   }
@@ -49,9 +54,8 @@ public class GadDag extends GraphForGadDag {
 
     LOG.debug("Checking if word: {}", word);
 
-    byte[] bytes = getWordBytes(word);
     long st = getInitialState();
-    GadDagEdge arc = getArc( st, bytes[0] );
+    GadDagEdge arc = getArc( st, word.charAt(0) );
 
     if (arc == null) {
       LOG.debug("Failed! No initial arc for `{}'", word.charAt(0));
@@ -71,8 +75,8 @@ public class GadDag extends GraphForGadDag {
 
     st = getEdgeTarget( arc );
 
-    for (int i = 1; i < bytes.length - 1; i++) {
-      arc = getArc( st, bytes[i] );
+    for (int i = 1; i < word.length() - 1; i++) {
+      arc = getArc( st, word.charAt(i) );
 
       if (arc == null) {
         LOG.debug("Failed at letter: " + word.charAt(i));
@@ -82,16 +86,14 @@ public class GadDag extends GraphForGadDag {
       st = getEdgeTarget( arc );
     }
 
-    LOG.debug("Checking for letter {} in: {}", arc.getWordLetters(), word.charAt(word.length() - 1));
-
-    return arc.hasWordLetter( bytes[bytes.length - 1] );
+    return arc.hasWordLetter( word.charAt(word.length() - 1) );
   }
 
   public GadDagEdge nextEdge( GadDagEdge edge, String letter ) {
-    return nextEdge(edge, (byte) letter.charAt(0));
+    return nextEdge(edge, letter.charAt(0));
   }
 
-  public GadDagEdge nextEdge( GadDagEdge edge, byte b ) {
+  public GadDagEdge nextEdge( GadDagEdge edge, char b ) {
     GadDagEdgeSet outgoing = (GadDagEdgeSet) outgoingEdgesOf( getEdgeTarget( edge ) );
 
     return outgoing.getEdgeForLetter( b );
@@ -103,43 +105,38 @@ public class GadDag extends GraphForGadDag {
 
   public void addWord(String word) {
     long st = getInitialState();
-    byte[] wordBytes = getWordBytes(word);
 
     LOG.debug("adding word {}", word);
 
     // create path for a_n a_(n-1) ... a_1
-    for (int i = wordBytes.length - 1; i >= 2; i--) {
-      Byte letter = wordBytes[i];
-
-      st = getEdgeTarget(addArc(st, letter));
+    for (int i = word.length() - 1; i >= 2; i--) {
+      st = getEdgeTarget(addArc(st, word.charAt(i)));
     }
-    addFinalArc(st, wordBytes[1], wordBytes[0]);
+    addFinalArc(st, word.charAt(1), word.charAt(0));
 
     // create path for a_(n-1) ... a_1 <> a_n
     st = getInitialState();
 
-    for (int i = wordBytes.length - 2; i >= 0; i--) {
-      Byte letter = wordBytes[i];
-
-      st = getEdgeTarget(addArc(st, letter));
+    for (int i = word.length() - 2; i >= 0; i--) {
+      st = getEdgeTarget(addArc(st, word.charAt(i)));
     }
-    st = getEdgeTarget(addFinalArc(st, CONCAT_OPERATOR, wordBytes[wordBytes.length - 1]));
+    st = getEdgeTarget(addFinalArc(st, CONCAT_OPERATOR, word.charAt(word.length() - 1)));
 
     long firstForceState = st;
 
     // create remaining parts
-    for (int i = wordBytes.length - 3; i >= 0; i--) {
+    for (int i = word.length() - 3; i >= 0; i--) {
       long forceSt = st;
       st = getInitialState();
 
       for (int j = i; j >= 0; j--) {
-        st = getEdgeTarget(addArc(st, wordBytes[j]));
+        st = getEdgeTarget(addArc(st, word.charAt(j)));
       }
       st = getEdgeTarget(addArc(st, CONCAT_OPERATOR));
-      GadDagEdge forcedArc = forceArc(st, wordBytes[i + 1], forceSt);
+      GadDagEdge forcedArc = forceArc(st, word.charAt(i + 1), forceSt);
 
       if (firstForceState == forceSt)
-        forcedArc.addWordLetter(wordBytes[ wordBytes.length - 1]);
+        forcedArc.addWordLetter(word.charAt(word.length() - 1));
     }
   }
 
@@ -151,13 +148,13 @@ public class GadDag extends GraphForGadDag {
     return stateCounter++;
   }
 
-  public GadDagEdge getArc(long st, byte letter) {
+  public GadDagEdge getArc(long st, char letter) {
     assertVertexExist(st);
 
    return  ((GadDagEdgeSet) outgoingEdgesOf(st)).getEdgeForLetter(letter);
   }
 
-  public GadDagEdge addArc(long st, byte letter) {
+  public GadDagEdge addArc(long st, char letter) {
     assertVertexExist(st);
 
     GadDagEdgeSet edges = (GadDagEdgeSet) outgoingEdgesOf(st);
@@ -167,14 +164,14 @@ public class GadDag extends GraphForGadDag {
       long newState = getNewState();
       addVertex(newState);
 
-      edge = new GadDagEdge(letter, false);
+      edge = new GadDagEdge(letter, LETTER_SET_FACTORY);
       addEdge(st, newState, edge);
     }
 
     return edge;
   }
 
-  public GadDagEdge addFinalArc(long st, byte ch1, byte ch2) {
+  public GadDagEdge addFinalArc(long st, char ch1, char ch2) {
     assertVertexExist(st);
 
     GadDagEdge edge = addArc(st, ch1);
@@ -185,7 +182,7 @@ public class GadDag extends GraphForGadDag {
     return edge;
   }
 
-  public GadDagEdge forceArc(long st, byte letter, long destSt) {
+  public GadDagEdge forceArc(long st, char letter, long destSt) {
     assertVertexExist(st);
     assertVertexExist(destSt);
 
@@ -195,7 +192,7 @@ public class GadDag extends GraphForGadDag {
     if (existingEdge != null && getEdgeTarget(existingEdge) != destSt)
       throw new IllegalStateException();
     else if (existingEdge == null) {
-      GadDagEdge newEdge = new GadDagEdge(letter, existingEdge != null);
+      GadDagEdge newEdge = new GadDagEdge(letter, LETTER_SET_FACTORY);
       addEdge(st, destSt, newEdge);
 
       return newEdge;
