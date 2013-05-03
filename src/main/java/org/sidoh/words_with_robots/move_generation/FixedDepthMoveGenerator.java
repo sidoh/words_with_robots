@@ -2,11 +2,12 @@ package org.sidoh.words_with_robots.move_generation;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.MinMaxPriorityQueue;
-import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
-import org.sidoh.words_with_robots.move_generation.params.FixedDepthParamKey;
-import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
-import org.sidoh.words_with_robots.move_generation.params.PreemptionContext;
-import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
+import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
+import org.sidoh.words_with_robots.move_generation.old_params.FixedDepthParamKey;
+import org.sidoh.words_with_robots.move_generation.old_params.MoveGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.old_params.PreemptionContext;
+import org.sidoh.words_with_robots.move_generation.old_params.WwfMoveGeneratorParamKey;
+import org.sidoh.words_with_robots.move_generation.params.FixedDepthGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.swap_strategies.SwapStrategy;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
@@ -19,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -28,10 +28,10 @@ import java.util.Set;
  * branching factor and ignoring a few low-score moves.
  *
  */
-public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
+public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator<FixedDepthGeneratorParams, WwfMoveGeneratorReturnContext> {
   private static final Logger LOG = LoggerFactory.getLogger(FixedDepthMoveGenerator.class);
 
-  private final WordsWithFriendsMoveGenerator inner;
+  private final WordsWithFriendsMoveGenerator<?,?> inner;
   private static final GameStateHelper stateHelper = GameStateHelper.getInstance();
 
   public FixedDepthMoveGenerator(WordsWithFriendsMoveGenerator inner) {
@@ -39,13 +39,12 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
   }
 
   @Override
-  public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
+  public WwfMoveGeneratorReturnContext generateMove(FixedDepthGeneratorParams params) {
     // Perform search
-    AlgorithmSettings settings = AlgorithmSettings.fromParams(params);
     AlphaBetaClosure inputClosure = AlphaBetaClosure.newClosure(params);
-    AlphaBetaClosure closure = alphaBetaSearch(settings, inputClosure);
+    AlphaBetaClosure closure = alphaBetaSearch(params, inputClosure);
 
-    List<Tile> tilesToSwap = settings.getSwapStrategy().getTilesToSwap(closure.getState(), closure.getReturnMove());
+    List<Tile> tilesToSwap = params.getSwapStrategy().getTilesToSwap(closure.getState(), closure.getReturnMove());
     if ( tilesToSwap.size() > 0 ) {
       closure.setReturnMove(Move.swap(tilesToSwap));
     }
@@ -68,10 +67,10 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
         closure.getReturnValue());
     }
 
-    return closure.getReturnMove();
+    return createReturnContext(closure.getReturnMove());
   }
 
-  protected AlphaBetaClosure alphaBetaSearch(AlgorithmSettings settings, AlphaBetaClosure closure) {
+  protected AlphaBetaClosure alphaBetaSearch(FixedDepthGeneratorParams params, AlphaBetaClosure closure) {
     // If this is a terminal state, evaluate the game state.
     if ( closure.getRemainingDepth() == 0 || closure.getRack().getTilesSize() == 0 ) {
       double score = evaluateState(closure);
@@ -80,7 +79,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
         .setReachedTerminalState( closure.getRack() == null || closure.getRack().getTilesSize() == 0 );
     }
 
-    PreemptionContext preemptionContext = settings.getPreemptionContext();
+    PreemptionContext preemptionContext = params.getPreemptionContext();
     if ( preemptionContext.getPreemptState() == PreemptionContext.State.STRONG_PREEMPT ) {
       return closure;
     }
@@ -127,9 +126,9 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
     AlphaBetaClosure returnClosure = null;
     MinMaxPriorityQueue<CachedMove> moveCache;
 
-    if ( settings.getMoveCacheSize() > 0 ) {
+    if ( params.getMoveCacheSize() > 0 ) {
       moveCache = MinMaxPriorityQueue
-        .maximumSize(settings.getMoveCacheSize())
+        .maximumSize(params.getMoveCacheSize())
         .create();
     }
     else {
@@ -148,13 +147,13 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
       board.move( move );
 
       // Stop considering moves if this one sucks and we've already considered better moves.
-      if ( move.getResult().getScore() < settings.getMinScore() && movesConsidered > 0 ) {
+      if ( move.getResult().getScore() < params.getMinScore() && movesConsidered > 0 ) {
         LOG.debug("stop considering moves after seeing one with score {}", move.getResult().getScore());
         break;
       }
 
       // Break early if the branching factor limits us
-      if ( movesConsidered >= settings.getBranchingFactorLimit() ) {
+      if ( movesConsidered >= params.getBranchingFactorLimit() ) {
         break;
       }
 
@@ -177,7 +176,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
         .setReturnMoveIndex(movesConsidered)
         .setPlayer(player.getOther());
 
-      callClosure = alphaBetaSearch(settings, callClosure);
+      callClosure = alphaBetaSearch(params, callClosure);
 
       // Offer the result of this call to the cache, which may prevent generating moves for future
       // calls. Only cache moves that are actually moves
@@ -261,6 +260,11 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
   @Override
   protected boolean isWord(String word) {
     return inner.isWord(word);
+  }
+
+  @Override
+  protected WwfMoveGeneratorReturnContext createReturnContext(Move move) {
+    return inner.createReturnContext(move);
   }
 
   /**
@@ -375,55 +379,6 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
         closure.getBeta(),
         closure.getReturnMove(),
         closure.getPlayer());
-    }
-  }
-
-  /**
-   * A wrapper around move generator settings -- avoid the overhead of hashtable lookups to get static
-   * properties
-   */
-  protected static class AlgorithmSettings {
-    private final int moveCacheSize;
-    private final int minScore;
-    private final int branchingFactorLimit;
-    private final PreemptionContext context;
-    private final SwapStrategy swapStrategy;
-
-    private AlgorithmSettings(int moveCacheSize, int minScore, int branchingFactorLimit, PreemptionContext context, SwapStrategy swapStrategy) {
-      this.moveCacheSize = moveCacheSize;
-      this.minScore = minScore;
-      this.branchingFactorLimit = branchingFactorLimit;
-      this.context = context;
-      this.swapStrategy = swapStrategy;
-    }
-
-    public static AlgorithmSettings fromParams(MoveGeneratorParams params) {
-      return new AlgorithmSettings(
-        params.getInt(FixedDepthParamKey.MOVE_CACHE_SIZE),
-        params.getInt(FixedDepthParamKey.MIN_SCORE),
-        params.getInt(FixedDepthParamKey.BRANCHING_FACTOR_LIMIT),
-        (PreemptionContext) params.get(FixedDepthParamKey.PREEMPTION_CONTEXT),
-        (SwapStrategy)params.get(WwfMoveGeneratorParamKey.SWAP_STRATEGY));
-    }
-
-    public SwapStrategy getSwapStrategy() {
-      return swapStrategy;
-    }
-
-    public int getMoveCacheSize() {
-      return moveCacheSize;
-    }
-
-    public int getMinScore() {
-      return minScore;
-    }
-
-    public int getBranchingFactorLimit() {
-      return branchingFactorLimit;
-    }
-
-    public PreemptionContext getPreemptionContext() {
-      return context;
     }
   }
 
@@ -572,8 +527,8 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
       return this;
     }
 
-    public static AlphaBetaClosure newClosure(MoveGeneratorParams params) {
-      GameState state = (GameState) params.get(WwfMoveGeneratorParamKey.GAME_STATE);
+    public static AlphaBetaClosure newClosure(FixedDepthGeneratorParams params) {
+      GameState state = params.getGameState();
       MinimaxPlayer player = MinimaxPlayer.fromGameState(state);
       WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
@@ -584,7 +539,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator {
         .setState(state)
         .setBoard(board)
         .setRack(stateHelper.buildRack(player.getUserId(), state))
-        .setRemainingDepth(params.getInt(FixedDepthParamKey.MAXIMUM_DEPTH));
+        .setRemainingDepth(params.getMaxDepth());
     }
   }
 }

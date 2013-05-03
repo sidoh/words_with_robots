@@ -7,7 +7,7 @@ public enum RobotSettingKey {
    * Defines the maximum number of active games to keep running. If there are fewer games
    * than this, the robot will try to create more.
    */
-  MAX_GAMES(20),
+  MAX_GAMES(3),
 
   /**
    * The maximum number of consumer threads. This does not include the producer or the

@@ -1,9 +1,9 @@
-package org.sidoh.words_with_robots.move_generation.params;
+package org.sidoh.words_with_robots.move_generation.old_params;
 
 /**
  * Defines a parameter key for use in MoveGeneratorParams. Intended to be extended by
  * enums.
  */
 public interface MoveGeneratorParamKey {
-  public Object getDefaultValue();
+  public <V> V getDefaultValue();
 }

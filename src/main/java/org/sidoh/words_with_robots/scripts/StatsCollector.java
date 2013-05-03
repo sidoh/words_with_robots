@@ -1,4 +1,4 @@
-package org.sidoh.words_with_robots;
+package org.sidoh.words_with_robots.scripts;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;

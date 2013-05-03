@@ -2,9 +2,9 @@ package org.sidoh.words_with_robots.move_generation;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
-import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
-import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
+import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParams;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.TileBuilder;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
@@ -26,13 +26,17 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsWithFriendsBoard> {
+public abstract class WordsWithFriendsMoveGenerator<P extends WwfMoveGeneratorParams, R extends WwfMoveGeneratorReturnContext>
+  implements MoveGenerator<WordsWithFriendsBoard, P, R> {
+
   private static final Logger LOG = LoggerFactory.getLogger(WordsWithFriendsMoveGenerator.class);
 
   @Override
-  public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
-    EvaluationFunction evalFn = (EvaluationFunction) params.get(WwfMoveGeneratorParamKey.EVAL_FUNCTION);
-    GameState state = (GameState)params.get(WwfMoveGeneratorParamKey.GAME_STATE);
+  public R generateMove(P params) {
+    WordsWithFriendsBoard board = params.getBoard();
+    Rack baseRack = params.getRack();
+    EvaluationFunction evalFn = params.getEvaluationFunction();
+    GameState state = params.getGameState();
     Move bestMove = null;
     double bestScore = 0;
 
@@ -49,10 +53,10 @@ public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsW
 
     // Pass if a move wasn't generated
     if ( bestMove == null ) {
-      return Move.pass();
+      return createReturnContext(Move.pass());
     }
     else {
-      return bestMove;
+      return createReturnContext(bestMove);
     }
   }
 
@@ -235,6 +239,13 @@ public abstract class WordsWithFriendsMoveGenerator extends MoveGenerator<WordsW
    * @return true if the provided word is valid for the game
    */
   protected abstract boolean isWord(String word);
+
+  /**
+   *
+   * @param move
+   * @return
+   */
+  protected abstract R createReturnContext(Move move);
 
   /**
    * Rather than sticking all possible moves into memory, this allows the consumer to iterate over possible moves.

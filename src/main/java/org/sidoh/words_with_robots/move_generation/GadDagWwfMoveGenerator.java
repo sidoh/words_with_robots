@@ -3,6 +3,8 @@ package org.sidoh.words_with_robots.move_generation;
 import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDagEdge;
+import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
+import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParams;
 import org.sidoh.wwf_api.game_state.Direction;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.SlotIterator;
@@ -19,7 +21,7 @@ import java.util.Set;
 /**
  * A move generator that uses a GADDAG.
  */
-public class GadDagWwfMoveGenerator extends WordsWithFriendsMoveGenerator {
+public class GadDagWwfMoveGenerator extends WordsWithFriendsMoveGenerator<WwfMoveGeneratorParams, WwfMoveGeneratorReturnContext> {
   private final GadDag gaddag;
 
   public GadDagWwfMoveGenerator(GadDag gaddag) {
@@ -45,6 +47,11 @@ public class GadDagWwfMoveGenerator extends WordsWithFriendsMoveGenerator {
   @Override
   protected boolean isWord(String word) {
     return gaddag.isWord(word);
+  }
+
+  @Override
+  protected WwfMoveGeneratorReturnContext createReturnContext(Move move) {
+    return new WwfMoveGeneratorReturnContext(move);
   }
 
   private void gen(WordsWithFriendsBoard board, SlotIterator.Iterator itr, String word, Set<Tile> tiles, GadDagEdge edge, Move move, Set<Move> moves) {

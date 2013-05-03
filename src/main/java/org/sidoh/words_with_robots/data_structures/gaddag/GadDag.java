@@ -34,18 +34,22 @@ public class GadDag extends GraphForGadDag {
     addEdge(NULL_STATE, INITIAL_STATE, initEdge);
   }
 
-  public void loadDictionary(Reader reader) throws IOException {
+  public int loadDictionary(Reader reader) throws IOException {
+    int numLines = 0;
     BufferedReader lineReader = new BufferedReader(reader);
     String line = lineReader.readLine();
 
     LOG.debug("Loading dictionary from: " + reader);
 
     while (line != null) {
+      numLines++;
       addWord(line);
 
       LOG.debug("added " + line);
       line = lineReader.readLine();
     }
+
+    return numLines;
   }
 
   public boolean isWord(String word) {
@@ -138,6 +142,16 @@ public class GadDag extends GraphForGadDag {
       if (firstForceState == forceSt)
         forcedArc.addWordLetter(word.charAt(word.length() - 1));
     }
+  }
+
+  public void compact() {
+    int edgesProcessed = 0;
+    for (Long v : this.vertexSet()) {
+      GadDagEdgeSet edgeSet = (GadDagEdgeSet) outgoingEdgesOf(v);
+      edgeSet.compact();
+      edgesProcessed += edgeSet.size();
+    }
+    LOG.info("Finished compacting {} edges", edgesProcessed);
   }
 
   public long getInitialState() {

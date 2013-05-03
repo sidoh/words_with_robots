@@ -1,7 +1,6 @@
-package org.sidoh.words_with_robots.move_generation.params;
+package org.sidoh.words_with_robots.move_generation.old_params;
 
 import com.google.common.collect.Maps;
-import org.sidoh.words_with_robots.move_generation.MoveGenerator;
 
 import java.util.Collections;
 import java.util.Map;

@@ -61,7 +61,10 @@ public class Robot {
   public synchronized WordsWithFriendsMoveGenerator getMoveGenerator() {
     if ( this.moveGenerator == null ) {
       try {
-        dictionary.loadDictionary(DictionaryHelper.getDictionaryResource());
+        LOG.info("Loading dictionary....");
+        int lines = dictionary.loadDictionary(DictionaryHelper.getDictionaryResource());
+        dictionary.compact();
+        LOG.info("Done! Loaded {} words.", lines);
         moveGenerator = new IterativeDeepeningMoveGenerator(new GadDagWwfMoveGenerator(dictionary));
 //        moveGenerator = new WwfMinimaxLocal(new GadDagWwfMoveGenerator(dictionary));
       } catch (IOException e) {

@@ -1,15 +1,14 @@
 package org.sidoh.words_with_robots.move_generation;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
-import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
-import org.sidoh.words_with_robots.move_generation.params.FixedDepthParamKey;
-import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningParamKey;
-import org.sidoh.words_with_robots.move_generation.params.KillSignalBeacon;
-import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
-import org.sidoh.words_with_robots.move_generation.params.PreemptionContext;
-import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
+import com.google.common.collect.Maps;
+import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
+import org.sidoh.words_with_robots.move_generation.old_params.FixedDepthParamKey;
+import org.sidoh.words_with_robots.move_generation.old_params.IterativeDeepeningParamKey;
+import org.sidoh.words_with_robots.move_generation.old_params.MoveGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.old_params.PreemptionContext;
+import org.sidoh.words_with_robots.move_generation.old_params.WwfMoveGeneratorParamKey;
+import org.sidoh.words_with_robots.move_generation.params.FixedDepthGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningGeneratorParams;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
@@ -18,40 +17,44 @@ import org.sidoh.wwf_api.types.game_state.Rack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerator {
+public class IterativeDeepeningMoveGenerator
+  extends WordsWithFriendsMoveGenerator<IterativeDeepeningGeneratorParams, WwfMoveGeneratorReturnContext> {
+
   private static final Logger LOG = LoggerFactory.getLogger(IterativeDeepeningMoveGenerator.class);
   private final FixedDepthMoveGenerator allMovesGenerator;
 
-  public IterativeDeepeningMoveGenerator(WordsWithFriendsMoveGenerator allMovesGenerator) {
+  public IterativeDeepeningMoveGenerator(WordsWithFriendsMoveGenerator<?,?> allMovesGenerator) {
     this.allMovesGenerator = new FixedDepthMoveGenerator(allMovesGenerator);
   }
 
   @Override
-  public Move generateMove(Rack rack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
+  public WwfMoveGeneratorReturnContext generateMove(IterativeDeepeningGeneratorParams params) {
     LOG.info("Generating move. Starting at depth 2");
-    boolean verboseStats = params.getBoolean(IterativeDeepeningParamKey.VERBOSE_STATS_ENABLED);
-    GameState state = (GameState) params.get(WwfMoveGeneratorParamKey.GAME_STATE);
-    Map<String, Object> stats = (Map<String, Object>)params.get(WwfMoveGeneratorParamKey.GAME_STATS);
+    boolean verboseStats = params.isVerboseStats();
+    GameState state = params.getGameState();
+    Map<String, Object> stats = Maps.newHashMap();
+    Rack rack = params.getRack();
+    WordsWithFriendsBoard board = params.getBoard();
 
     // Get our preemption context, which will allow us to preempt the underlying fixed store
     // when its minimum time to run is up
-   PreemptionContext preemptionContext = (PreemptionContext) params.get(FixedDepthParamKey.PREEMPTION_CONTEXT);
+   PreemptionContext preemptionContext = params.getPreemptionContext();
 
     // Set up a kill signal so that we can stop execution when we want
     PreemptionContext childPreemptionContext = new PreemptionContext();
-    MoveGeneratorParams childParams = params.clone()
-      .set(FixedDepthParamKey.PREEMPTION_CONTEXT, childPreemptionContext);
 
     // Figure out how long we're allowed to run
     long startTime = System.currentTimeMillis();
 
     // Set up and start a producer thread
-    IterativeDeepeningProducer producer = new IterativeDeepeningProducer(rack, board, childParams);
+    IterativeDeepeningProducer producer = new IterativeDeepeningProducer(rack,
+      board,
+      state,
+      preemptionContext,
+      params.getFixedDepthParamsBuilder());
     Thread producerThread = new Thread(producer);
     producerThread.start();
 
@@ -79,10 +82,10 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
     stats.put(getStatsKey("max_depth"), producer.currentDepth-2);
 
     // Find the index of the produced move
-    Move bestMove = producer.getBestMove();
+    WwfMoveGeneratorReturnContext bestMove = producer.getBestMove();
 
     if ( verboseStats ) {
-      int moveRank = findMoveRank(rack, board, bestMove);
+      int moveRank = findMoveRank(rack, board, bestMove.getMove());
       stats.put(getStatsKey("move_rank"), moveRank);
       stats.put(getStatsKey("turn_index"), state.getAllMoves().size());
     }
@@ -121,14 +124,14 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
    * @param params params called
    * @return
    */
-  protected static boolean isExpired(IterativeDeepeningProducer producer, long startTime, PreemptionContext pcontext, MoveGeneratorParams params) {
+  protected static boolean isExpired(IterativeDeepeningProducer producer, long startTime, PreemptionContext pcontext, IterativeDeepeningGeneratorParams params) {
     // Don't expire if we haven't found a move yet
     if ( producer.getBestMove() == null ) {
       return false;
     }
 
-    long minRunTime = params.getLong(IterativeDeepeningParamKey.MIN_EXECUTION_TIME_IN_MS);
-    long maxRunTime = params.getLong(IterativeDeepeningParamKey.MAX_EXECUTION_TIME_IN_MS);
+    long minRunTime = params.getMinExecutionTime();
+    long maxRunTime = params.getMaxExecutionTime();
 
     // If we're preempted strongly, we must stop execution immediately
     if ( pcontext.getPreemptState() == PreemptionContext.State.STRONG_PREEMPT ) {
@@ -156,40 +159,51 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
     return allMovesGenerator.isWord(word);
   }
 
+  @Override
+  protected WwfMoveGeneratorReturnContext createReturnContext(Move move) {
+    return allMovesGenerator.createReturnContext(move);
+  }
+
   private class IterativeDeepeningProducer implements Runnable {
     private final WordsWithFriendsBoard board;
     private final Rack rack;
-    private final MoveGeneratorParams params;
     private int currentDepth;
-    private Move currentBest;
+    private WwfMoveGeneratorReturnContext currentBest;
     private boolean complete;
+    private final GameState state;
+    private final PreemptionContext preemptionContext;
+    private final FixedDepthGeneratorParams.Builder fixedDepthParamsBuilder;
 
-    public IterativeDeepeningProducer(Rack rack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
-      this.board = board;
+    public IterativeDeepeningProducer(Rack rack,
+                                      WordsWithFriendsBoard board,
+                                      GameState state,
+                                      PreemptionContext preemptionContext,
+                                      FixedDepthGeneratorParams.Builder fixedDepthParamsBuilder) {
       this.rack = rack;
-      this.params = params;
+      this.board = board;
+      this.state = state;
+      this.preemptionContext = preemptionContext;
+      this.fixedDepthParamsBuilder = fixedDepthParamsBuilder;
       this.currentDepth = 2;
       this.complete = false;
     }
 
     @Override
     public void run() {
-      PreemptionContext beacon
-        = (PreemptionContext) params.get(FixedDepthParamKey.PREEMPTION_CONTEXT);
-      GameState state
-        = (GameState) params.get(WwfMoveGeneratorParamKey.GAME_STATE);
       int numTiles = (WordsWithFriendsBoard.TILES_PER_PLAYER*2)
         + state.getRemainingTilesSize();
 
-      while ( beacon.getPreemptState() == PreemptionContext.State.NOT_PREEMPTED ) {
+      while ( preemptionContext.getPreemptState() == PreemptionContext.State.NOT_PREEMPTED ) {
         LOG.info("Moving to depth {}", currentDepth);
-        params.set(FixedDepthParamKey.MAXIMUM_DEPTH, currentDepth);
+        FixedDepthGeneratorParams params = fixedDepthParamsBuilder
+          .setMaxDepth(currentDepth)
+          .build(state);
 
         try {
-          Move best = allMovesGenerator.generateMove(rack, board, params);
+          WwfMoveGeneratorReturnContext best = allMovesGenerator.generateMove(params);
 
           // Don't update the best if we've been preempted.
-          if ( beacon.getPreemptState() == PreemptionContext.State.NOT_PREEMPTED ) {
+          if ( preemptionContext.getPreemptState() == PreemptionContext.State.NOT_PREEMPTED ) {
             currentBest = best;
           }
         }
@@ -200,15 +214,14 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
 
         // Don't continue if a terminal state was reached
         // don't continue if there have been more moves than there were tiles
-        if ( params.getBoolean(FixedDepthParamKey.REACHED_TERMINAL_STATE)
-          || currentBest.getMoveType() == MoveType.PASS
+        if ( currentBest.getMove().getMoveType() == MoveType.PASS
           || currentDepth > numTiles) {
           LOG.info("Reached terminal state at depth {}", currentDepth);
           complete = true;
           break;
         }
 
-        currentDepth += 2;
+        currentDepth += 1;
       }
     }
 
@@ -216,7 +229,7 @@ public class IterativeDeepeningMoveGenerator extends WordsWithFriendsMoveGenerat
       return complete;
     }
 
-    public Move getBestMove() {
+    public WwfMoveGeneratorReturnContext getBestMove() {
       return currentBest;
     }
   }

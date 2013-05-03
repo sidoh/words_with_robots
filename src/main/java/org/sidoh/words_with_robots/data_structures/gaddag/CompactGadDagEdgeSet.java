@@ -1,15 +1,21 @@
 package org.sidoh.words_with_robots.data_structures.gaddag;
 
 import com.google.common.collect.Lists;
+import org.apache.commons.collections.iterators.ArrayIterator;
 import org.sidoh.words_with_robots.data_structures.BitFieldLetterSet;
 import org.sidoh.words_with_robots.data_structures.LetterSet;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
 public class CompactGadDagEdgeSet extends GadDagEdgeSet {
-  private final List<GadDagEdge> edges = Lists.newArrayList();
+  private static final Comparator<GadDagEdge> EDGE_COMPARATOR = new EdgeComparator();
+
+  private List<GadDagEdge> edges = Lists.newLinkedList();
   private final LetterSet setEdges = new BitFieldLetterSet();
+  private GadDagEdge[] compactedEdges;
 
   @Override
   public boolean containsEdgeForLetter(char letter) {
@@ -18,22 +24,30 @@ public class CompactGadDagEdgeSet extends GadDagEdgeSet {
 
   @Override
   public GadDagEdge getEdgeForLetter(char letter) {
-    if ( !setEdges.contains(letter)) {
+    if (setEdges.contains(letter)) {
+      for (GadDagEdge edge : this) {
+        if ( edge.getDestinationLetter() == letter ) {
+          return edge;
+        }
+      }
+
+      throw new RuntimeException("Edge exists in edge set, but not in list of edges: " + letter);
+    }
+    else {
       return null;
     }
+  }
 
-    for (GadDagEdge edge : edges) {
-      if ( edge.getDestinationLetter() == letter ) {
-        return edge;
-      }
-    }
-
-    throw new RuntimeException("Requested edge that doesn't exist, but exists in edge set: " + letter);
+  @Override
+  public void compact() {
+    compactedEdges = edges.toArray(new GadDagEdge[edges.size()]);
+    edges = null;
+    Arrays.sort(compactedEdges, EDGE_COMPARATOR);
   }
 
   @Override
   public int size() {
-    return edges.size();
+    return edges != null ? edges.size() : compactedEdges.length;
   }
 
   @Override
@@ -48,7 +62,12 @@ public class CompactGadDagEdgeSet extends GadDagEdgeSet {
 
   @Override
   public Iterator<GadDagEdge> iterator() {
-    return edges.iterator();
+    if (edges == null) {
+      return new ArrayIterator(compactedEdges);
+    }
+    else {
+      return edges.iterator();
+    }
   }
 
   @Override
@@ -60,5 +79,12 @@ public class CompactGadDagEdgeSet extends GadDagEdgeSet {
     setEdges.add(gadDagEdge.getDestinationLetter());
     edges.add(gadDagEdge);
     return true;
+  }
+
+  protected static class EdgeComparator implements Comparator<GadDagEdge> {
+    @Override
+    public int compare(GadDagEdge gadDagEdge, GadDagEdge gadDagEdge1) {
+      return Character.valueOf(gadDagEdge.getDestinationLetter()).compareTo(gadDagEdge1.getDestinationLetter());
+    }
   }
 }

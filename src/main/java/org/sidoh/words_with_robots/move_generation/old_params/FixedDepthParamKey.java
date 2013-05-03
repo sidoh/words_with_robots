@@ -1,4 +1,4 @@
-package org.sidoh.words_with_robots.move_generation.params;
+package org.sidoh.words_with_robots.move_generation.old_params;
 
 /**
  * Params to be used with a fixed depth move algorithm

@@ -1,4 +1,4 @@
-package org.sidoh.words_with_robots.move_generation.params;
+package org.sidoh.words_with_robots.move_generation.old_params;
 
 import com.google.common.collect.Maps;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;

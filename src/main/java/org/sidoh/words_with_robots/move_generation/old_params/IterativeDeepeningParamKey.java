@@ -1,4 +1,4 @@
-package org.sidoh.words_with_robots.move_generation.params;
+package org.sidoh.words_with_robots.move_generation.old_params;
 
 /**
  * Defines some special parameters for use with an iterative deepening algorithm

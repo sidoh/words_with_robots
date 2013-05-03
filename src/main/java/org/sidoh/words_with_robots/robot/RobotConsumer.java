@@ -1,13 +1,14 @@
 package org.sidoh.words_with_robots.robot;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import org.apache.thrift.TException;
 import org.sidoh.words_with_robots.move_generation.WordsWithFriendsMoveGenerator;
-import org.sidoh.words_with_robots.move_generation.params.FixedDepthParamKey;
-import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
-import org.sidoh.words_with_robots.move_generation.params.PreemptionContext;
-import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
+import org.sidoh.words_with_robots.move_generation.old_params.FixedDepthParamKey;
+import org.sidoh.words_with_robots.move_generation.old_params.MoveGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.old_params.PreemptionContext;
+import org.sidoh.words_with_robots.move_generation.old_params.WwfMoveGeneratorParamKey;
+import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParams;
 import org.sidoh.words_with_robots.util.io.StatePrinter;
 import org.sidoh.wwf_api.MoveValidationException;
 import org.sidoh.wwf_api.StatefulApiProvider;
@@ -17,14 +18,12 @@ import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.ChatMessage;
 import org.sidoh.wwf_api.types.api.GameState;
 import org.sidoh.wwf_api.types.game_state.Rack;
-import org.sidoh.wwf_api.types.game_state.Tile;
 import org.sidoh.wwf_api.util.ThriftSerializationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -126,10 +125,11 @@ class RobotConsumer implements Runnable {
           WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
           // Generate a move
-          MoveGeneratorParams params = buildParams(state);
+          WwfMoveGeneratorParams params = buildParams(state);
+
           Move generatedMove = moveCache.containsKey(state.getId())
             ? moveCache.get(state.getId())
-            : getMoveGenerator().generateMove(rack, board, params);
+            : getMoveGenerator().generateMove(params).getMove();
           moveCache.put(state.getId(), generatedMove);
 
           // Submit the generated move
@@ -144,10 +144,10 @@ class RobotConsumer implements Runnable {
           }
 
           // Log stats
-          Map<String, Object> stats = (Map<String, Object>) params.get(WwfMoveGeneratorParamKey.GAME_STATS);
-          for (Map.Entry<String, Object> entry : stats.entrySet()) {
-            LOG.info("Move generator stats: gameId {}, {}={}", state.getId(), entry.getKey(), entry.getValue());
-          }
+//          Map<String, Object> stats = (Map<String, Object>) params.get(WwfMoveGeneratorParamKey.GAME_STATS);
+//          for (Map.Entry<String, Object> entry : stats.entrySet()) {
+//            LOG.info("Move generator stats: gameId {}, {}={}", state.getId(), entry.getKey(), entry.getValue());
+//          }
         }
         finally {
           // Mark the game as processed
@@ -197,17 +197,17 @@ class RobotConsumer implements Runnable {
   /**
    * Build MoveGeneratorParams for use with a particular game state
    *
+   *
    * @param state
    * @return
    */
-  public MoveGeneratorParams buildParams(GameState state) {
+  public IterativeDeepeningGeneratorParams buildParams(GameState state) {
     synchronized (this) {
       preemptContext = new PreemptionContext();
     }
 
-    return new MoveGeneratorParams()
-      .set(WwfMoveGeneratorParamKey.GAME_STATS, Maps.newHashMap())
-      .set(WwfMoveGeneratorParamKey.GAME_STATE, state)
-      .set(FixedDepthParamKey.PREEMPTION_CONTEXT, preemptContext);
+    return new IterativeDeepeningGeneratorParams.Builder()
+      .setPreemptionContext(preemptContext)
+      .build(state);
   }
 }

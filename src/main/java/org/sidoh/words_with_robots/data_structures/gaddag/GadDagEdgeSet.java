@@ -22,6 +22,14 @@ public abstract class GadDagEdgeSet implements Set<GadDagEdge> {
    */
   public abstract GadDagEdge getEdgeForLetter(char letter);
 
+  /**
+   * Called by the GadDag when user indicates that they're done adding words. Implementation should
+   * use this knowledge to compact its memory usage. Default is NOOP.
+   */
+  public void compact() {
+
+  }
+
   @Override
   public boolean addAll(Collection<? extends GadDagEdge> gadDagEdges) {
     boolean changed = false;

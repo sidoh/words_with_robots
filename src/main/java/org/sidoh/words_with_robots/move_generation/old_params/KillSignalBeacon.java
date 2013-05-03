@@ -1,4 +1,4 @@
-package org.sidoh.words_with_robots.move_generation.params;
+package org.sidoh.words_with_robots.move_generation.old_params;
 
 /**
  * Used to signal to move generation algorithms that they should stop what they're doing and return the

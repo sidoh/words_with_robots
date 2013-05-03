@@ -2,11 +2,9 @@ package org.sidoh.words_with_robots.move_generation;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.MinMaxPriorityQueue;
-import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
+import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
-import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
-import org.sidoh.words_with_robots.move_generation.params.MoveGeneratorParams;
-import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParamKey;
+import org.sidoh.words_with_robots.move_generation.params.WwfMinimaxLocalParams;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
@@ -16,7 +14,9 @@ import org.sidoh.wwf_api.types.game_state.Rack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Implements minimax two moves deep. One could pretty easily go deeper, but the branching factor
@@ -28,12 +28,10 @@ import java.util.*;
  * Note that this is possible with WWF because you can know what the opponent's tiles are. This sort
  * of strategy doesn't make sense in a more solidly designed game.
  */
-public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
+public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator<WwfMinimaxLocalParams, WwfMoveGeneratorReturnContext> {
   private static final Logger LOG = LoggerFactory.getLogger(WwfMinimaxLocal.class);
-  private static final int DEFAULT_MOVE_CACHE_SIZE = 100;
-  private static final double CACHE_MISS_FLUSH_FACTOR = 0.5f;
 
-  private final WordsWithFriendsMoveGenerator inner;
+  private final WordsWithFriendsMoveGenerator<?, ?> inner;
   private static final GameStateHelper stateHelper = GameStateHelper.getInstance();
 
   public WwfMinimaxLocal(WordsWithFriendsMoveGenerator inner) {
@@ -41,10 +39,12 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
   }
 
   @Override
-  public Move generateMove(Rack baseRack, WordsWithFriendsBoard board, MoveGeneratorParams params) {
+  public WwfMoveGeneratorReturnContext generateMove(WwfMinimaxLocalParams params) {
     // Pull out params out of params object
-    EvaluationFunction eval = (EvaluationFunction) params.get(WwfMoveGeneratorParamKey.EVAL_FUNCTION);
-    int diffThreshold = params.getInt(WwfMoveGeneratorParamKey.DEFAULT_DIFF_THRESHOLD);
+    EvaluationFunction eval = params.getEvaluationFunction();
+    int diffThreshold = params.getDiffThreshold();
+    Rack baseRack = params.getRack();
+    WordsWithFriendsBoard board = params.getBoard();
 
     // Generate all possible moves given this game state
     List<Move> allMoves1 = Lists.newArrayList( generateAllPossibleMoves(baseRack, board) );
@@ -54,7 +54,7 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
     Move best = null;
 
     // Prepare some stuff for game state swapping
-    GameState state = (GameState) params.get(WwfMoveGeneratorParamKey.GAME_STATE);
+    GameState state = params.getGameState();
     User other = stateHelper.getOtherUser(state.getMeta().getCurrentMoveUserId(), state);
     Rack otherRack = stateHelper.buildRack(state.getRacks().get(other.getId()));
 
@@ -70,7 +70,7 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
     // moves.
     MinMaxPriorityQueue<Move> opMoveCache = MinMaxPriorityQueue
       .orderedBy(MoveScoreComparator.rawScoreComparator())
-      .maximumSize(DEFAULT_MOVE_CACHE_SIZE)
+      .maximumSize(params.getCacheSize())
       .create();
 
     for (Move move : allMoves1) {
@@ -104,10 +104,10 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
         continue;
       // In the event of a cache miss, flush some of the items out of the cache in hopes of populating it
       // with values more likely to result in cache hits.
-      else if (opMoveCache.size() == DEFAULT_MOVE_CACHE_SIZE) {
+      else if (opMoveCache.size() == params.getCacheSize()) {
         LOG.debug("cache miss. flushing some items.");
 
-        for (int i = 0; i < DEFAULT_MOVE_CACHE_SIZE * CACHE_MISS_FLUSH_FACTOR; i++) {
+        for (int i = 0; i < params.getCacheSize() * params.getCacheMissFlushFactor(); i++) {
           opMoveCache.removeLast();
         }
       }
@@ -145,23 +145,15 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
       if (diff >= diffThreshold) {
         LOG.info("Move satisfies the threshold. Exiting early.");
 
-        return best;
+        return createReturnContext(best);
       }
-    }
-
-    if ( best != null && bestOpMove != null ) {
-      bestOpMove = opMoveCache.peekFirst();
-      WordsWithFriendsBoard pboard = board.clone();
-      pboard.move(best);
-      LOG.info("best opponent move: " + bestOpMove.getResult().getResultingWords() + " (score = " + bestOp + ")");
-      params.set(WwfMoveGeneratorParamKey.BEST_OPPONENT_MOVE, bestOpMove);
     }
 
     if ( best != null ) {
       LOG.info("best move found: " + best.getResult().getResultingWords() + " (" + best.getResult().getScore() + " points)");
     }
 
-    return best;
+    return createReturnContext(best);
   }
 
   @Override
@@ -172,5 +164,10 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator {
   @Override
   protected boolean isWord(String word) {
     return inner.isWord(word);
+  }
+
+  @Override
+  protected WwfMoveGeneratorReturnContext createReturnContext(Move move) {
+    return inner.createReturnContext(move);
   }
 }
