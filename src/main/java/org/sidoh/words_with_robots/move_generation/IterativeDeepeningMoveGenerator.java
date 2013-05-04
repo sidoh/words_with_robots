@@ -1,6 +1,7 @@
 package org.sidoh.words_with_robots.move_generation;
 
 import com.google.common.collect.Maps;
+import org.sidoh.words_with_robots.move_generation.context.FixedDepthReturnContext;
 import org.sidoh.words_with_robots.move_generation.context.NonBlockingReturnContext;
 import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
 import org.sidoh.words_with_robots.move_generation.params.FixedDepthGeneratorParams;
@@ -8,6 +9,7 @@ import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningGene
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
+import org.sidoh.wwf_api.types.api.MoveType;
 import org.sidoh.wwf_api.types.game_state.Rack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +28,7 @@ public class IterativeDeepeningMoveGenerator
 
 
   private static final Logger LOG = LoggerFactory.getLogger(IterativeDeepeningMoveGenerator.class);
-  private final NonBlockingMoveGenerator<WordsWithFriendsBoard, FixedDepthGeneratorParams, WwfMoveGeneratorReturnContext> fixedDepthGenerator;
+  private final NonBlockingMoveGenerator<WordsWithFriendsBoard, FixedDepthGeneratorParams, FixedDepthReturnContext> fixedDepthGenerator;
   private WordsWithFriendsMoveGenerator<?, ?, ?> allMovesGenerator;
 
   public IterativeDeepeningMoveGenerator(WordsWithFriendsMoveGenerator<?,?,?> allMovesGenerator) {
@@ -58,17 +60,19 @@ public class IterativeDeepeningMoveGenerator
       FixedDepthGeneratorParams childParams = paramsBuilder
         .setMaxDepth(currentDepth)
         .build(state);
-      NonBlockingReturnContext<WwfMoveGeneratorReturnContext> answer = fixedDepthGenerator.generateMove(childParams);
-      Future<WwfMoveGeneratorReturnContext> future = answer.getFuture();
+      Future<FixedDepthReturnContext> future = fixedDepthGenerator
+        .generateMove(childParams)
+        .getFuture();
+      FixedDepthReturnContext answer;
 
       try {
         // If we haven't found a move at all, wait indefinitely. Otherwise, only allow timeRemaining milliseconds
         // to complete the computation
         if ( bestMove == null ) {
-          bestMove = future.get().getMove();
+          answer = future.get();
         }
         else {
-          bestMove = future.get(timeRemaining, TimeUnit.MILLISECONDS).getMove();
+          answer = future.get(timeRemaining, TimeUnit.MILLISECONDS);
         }
       }
       catch (InterruptedException e) {
@@ -80,6 +84,14 @@ public class IterativeDeepeningMoveGenerator
       }
       catch (TimeoutException e) {
         return new WwfMoveGeneratorReturnContext(bestMove);
+      }
+
+      bestMove = answer.getMove();
+
+      // Stop if the last depth reached a terminal state (i.e., increasing the depth won't do anything).
+      if ( answer.isTerminal()) {
+        LOG.info("Reached terminal state at depth {}. Generated move: {}", currentDepth, bestMove);
+        break;
       }
 
       currentDepth++;

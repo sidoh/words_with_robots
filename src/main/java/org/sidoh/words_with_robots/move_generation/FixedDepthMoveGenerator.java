@@ -2,6 +2,7 @@ package org.sidoh.words_with_robots.move_generation;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.MinMaxPriorityQueue;
+import org.sidoh.words_with_robots.move_generation.context.FixedDepthReturnContext;
 import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
 import org.sidoh.words_with_robots.move_generation.params.FixedDepthGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.util.MoveScoreComparator;
@@ -24,7 +25,7 @@ import java.util.Set;
  * branching factor and ignoring a few low-score moves.
  *
  */
-public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator<FixedDepthGeneratorParams, WwfMoveGeneratorReturnContext, FixedDepthGeneratorParams.Builder> {
+public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator<FixedDepthGeneratorParams, FixedDepthReturnContext, FixedDepthGeneratorParams.Builder> {
   private static final Logger LOG = LoggerFactory.getLogger(FixedDepthMoveGenerator.class);
 
   private final WordsWithFriendsMoveGenerator inner;
@@ -35,7 +36,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator<Fixed
   }
 
   @Override
-  public WwfMoveGeneratorReturnContext generateMove(FixedDepthGeneratorParams params) {
+  public FixedDepthReturnContext generateMove(FixedDepthGeneratorParams params) {
     // Perform search
     AlphaBetaClosure inputClosure = AlphaBetaClosure.newClosure(params);
     AlphaBetaClosure closure = alphaBetaSearch(params, inputClosure);
@@ -63,7 +64,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator<Fixed
         closure.getReturnValue());
     }
 
-    return createReturnContext(closure.getReturnMove());
+    return createReturnContext(closure.getReturnMove()).setTerminal(closure.reachedTerminalState());
   }
 
   protected AlphaBetaClosure alphaBetaSearch(FixedDepthGeneratorParams params, AlphaBetaClosure closure) {
@@ -258,8 +259,8 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator<Fixed
   }
 
   @Override
-  protected WwfMoveGeneratorReturnContext createReturnContext(Move move) {
-    return inner.createReturnContext(move);
+  protected FixedDepthReturnContext createReturnContext(Move move) {
+    return new FixedDepthReturnContext(move);
   }
 
   @Override
