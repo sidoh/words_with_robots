@@ -16,7 +16,7 @@ public class MoveGenerators {
    */
   public static
   <T extends Board, P extends MoveGeneratorParams<T>, R extends MoveGeneratorReturnContext>
-  NonBlockingMoveGenerator<T, P, R>
+  NonBlockingMoveGenerator<T, P, R> // returns
   asNonBlockingGenerator(MoveGenerator<T, P, R> generator) {
     return new NonBlockingMoveGenerator<T, P, R>(generator);
   }

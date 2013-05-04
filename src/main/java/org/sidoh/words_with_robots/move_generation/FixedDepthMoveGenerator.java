@@ -24,13 +24,13 @@ import java.util.Set;
  * branching factor and ignoring a few low-score moves.
  *
  */
-public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator<FixedDepthGeneratorParams, WwfMoveGeneratorReturnContext> {
+public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator<FixedDepthGeneratorParams, WwfMoveGeneratorReturnContext, FixedDepthGeneratorParams.Builder> {
   private static final Logger LOG = LoggerFactory.getLogger(FixedDepthMoveGenerator.class);
 
-  private final WordsWithFriendsMoveGenerator<?,?> inner;
+  private final WordsWithFriendsMoveGenerator inner;
   private static final GameStateHelper stateHelper = GameStateHelper.getInstance();
 
-  public FixedDepthMoveGenerator(WordsWithFriendsMoveGenerator<?, ? extends WwfMoveGeneratorReturnContext> inner) {
+  public FixedDepthMoveGenerator(WordsWithFriendsMoveGenerator inner) {
     this.inner = inner;
   }
 
@@ -260,6 +260,11 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator<Fixed
   @Override
   protected WwfMoveGeneratorReturnContext createReturnContext(Move move) {
     return inner.createReturnContext(move);
+  }
+
+  @Override
+  public FixedDepthGeneratorParams.Builder getParamsBuilder() {
+    return new FixedDepthGeneratorParams.Builder();
   }
 
   /**

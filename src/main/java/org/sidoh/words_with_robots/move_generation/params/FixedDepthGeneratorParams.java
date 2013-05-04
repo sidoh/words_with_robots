@@ -22,13 +22,14 @@ public class FixedDepthGeneratorParams extends WwfMoveGeneratorParams {
     public static final int MAX_DEPTH = 2;
   }
 
-  public static class Builder extends AbstractBuilder<FixedDepthGeneratorParams, Builder> {
+  public static class Builder extends AbstractParamsBuilder<FixedDepthGeneratorParams, Builder> {
     protected int maxDepth = DefaultValues.MAX_DEPTH;
     protected int moveCacheSize = DefaultValues.MOVE_CACHE_SIZE;
     protected int minScore = DefaultValues.MIN_SCORE;
     protected int branchingFactorLimit = DefaultValues.BRANCHING_FACTOR_LIMIT;
     protected SwapStrategy swapStrategy = DefaultValues.SWAP_STRATEGY;
 
+    @Override
     public FixedDepthGeneratorParams.Builder clone() {
       FixedDepthGeneratorParams.Builder builder = new FixedDepthGeneratorParams.Builder();
       builder.maxDepth = maxDepth;
@@ -40,7 +41,7 @@ public class FixedDepthGeneratorParams extends WwfMoveGeneratorParams {
     }
 
     @Override
-    protected FixedDepthGeneratorParams build(Rack rack, WordsWithFriendsBoard board) {
+    public FixedDepthGeneratorParams build(Rack rack, WordsWithFriendsBoard board) {
       throw new UnsupportedOperationException();
     }
 

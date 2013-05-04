@@ -19,14 +19,14 @@ public class IterativeDeepeningGeneratorParams extends WwfMoveGeneratorParams {
       = new FixedDepthGeneratorParams.Builder();
   }
 
-  public static class Builder extends AbstractBuilder<IterativeDeepeningGeneratorParams, Builder> {
+  public static class Builder extends AbstractParamsBuilder<IterativeDeepeningGeneratorParams, Builder> {
     private long maxExecutionTime = DefaultValues.MAX_EXECUTION_TIME;
     private long minExecutionTime = DefaultValues.MIN_EXECUTION_TIME;
     private boolean verboseStats = DefaultValues.VERBOSE_STATS_ENABLED;
     private FixedDepthGeneratorParams.Builder fixedDepthParamsBuilder = DefaultValues.FIXED_DEPTH_PARAMS_BUILDER;
 
     @Override
-    protected IterativeDeepeningGeneratorParams build(Rack rack, WordsWithFriendsBoard board) {
+    public IterativeDeepeningGeneratorParams build(Rack rack, WordsWithFriendsBoard board) {
       throw new UnsupportedOperationException();
     }
 

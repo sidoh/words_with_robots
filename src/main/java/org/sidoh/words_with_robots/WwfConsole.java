@@ -13,6 +13,7 @@ import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 import org.sidoh.words_with_robots.move_generation.eval.SummingEvalFunction;
 import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParams;
 import org.sidoh.words_with_robots.util.io.StatePrinter;
 import org.sidoh.words_with_robots.util.io.StdinPrompts;
 import org.sidoh.wwf_api.AccessTokenRetriever;
@@ -48,7 +49,7 @@ public class WwfConsole {
   static final GadDag gaddag = new GadDag();
   static final WordsWithFriendsMoveGenerator allMovesGen
     = new GadDagWwfMoveGenerator(gaddag);
-  static WordsWithFriendsMoveGenerator<IterativeDeepeningGeneratorParams, WwfMoveGeneratorReturnContext> moveGenerator
+  static WordsWithFriendsMoveGenerator generator
     = new IterativeDeepeningMoveGenerator(allMovesGen);
   static StatefulApiProvider api;
   static final GameStateHelper stateHelper = GameStateHelper.getInstance();
@@ -77,11 +78,12 @@ public class WwfConsole {
 //          , new NewTilesEvalFunction()
         );
 
-        IterativeDeepeningGeneratorParams params = new IterativeDeepeningGeneratorParams.Builder()
+        WwfMoveGeneratorParams params = generator
+          .getParamsBuilder()
           .setEvaluationFunction(defaultEvalFunction)
           .build(state);
 
-        bestMove = moveGenerator.generateMove(params).getMove();
+        bestMove = generator.generateMove(params).getMove();
 
         if (bestMove == null) {
           System.out.println("No moves possible!");
@@ -218,7 +220,7 @@ public class WwfConsole {
       String algorithm = StdinPrompts.promptForLine("Enter class name");
       String algoClass = String.format("org.sidoh.words_with_robots.move_generation.%s", algorithm);
       Constructor constructor = Class.forName(algoClass).getConstructor(WordsWithFriendsMoveGenerator.class);
-      moveGenerator = (WordsWithFriendsMoveGenerator) constructor.newInstance(allMovesGen);
+      generator = (WordsWithFriendsMoveGenerator) constructor.newInstance(allMovesGen);
     }
     else if ("dictLookup".equals(command)) {
       String[] words = StdinPrompts.promptForLine("Enter words (separated by commas)").split(",");

@@ -29,10 +29,13 @@ import java.util.Set;
  * Note that this is possible with WWF because you can know what the opponent's tiles are. This sort
  * of strategy doesn't make sense in a more solidly designed game.
  */
-public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator<WwfMinimaxLocalParams, WwfMoveGeneratorReturnContext> {
+public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator<WwfMinimaxLocalParams,
+                                                                   WwfMoveGeneratorReturnContext,
+                                                                   WwfMinimaxLocalParams.Builder> {
+
   private static final Logger LOG = LoggerFactory.getLogger(WwfMinimaxLocal.class);
 
-  private final WordsWithFriendsMoveGenerator<?, ?> inner;
+  private final WordsWithFriendsMoveGenerator<?, ?, ?> inner;
   private static final GameStateHelper stateHelper = GameStateHelper.getInstance();
 
   public WwfMinimaxLocal(WordsWithFriendsMoveGenerator inner) {
@@ -170,5 +173,10 @@ public class WwfMinimaxLocal extends WordsWithFriendsMoveGenerator<WwfMinimaxLoc
   @Override
   protected WwfMoveGeneratorReturnContext createReturnContext(Move move) {
     return inner.createReturnContext(move);
+  }
+
+  @Override
+  public WwfMinimaxLocalParams.Builder getParamsBuilder() {
+    return new WwfMinimaxLocalParams.Builder();
   }
 }

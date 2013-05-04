@@ -20,13 +20,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class IterativeDeepeningMoveGenerator
-  extends WordsWithFriendsMoveGenerator<IterativeDeepeningGeneratorParams, WwfMoveGeneratorReturnContext> {
+  extends WordsWithFriendsMoveGenerator<IterativeDeepeningGeneratorParams,
+                                        WwfMoveGeneratorReturnContext,
+                                        IterativeDeepeningGeneratorParams.Builder> {
+
 
   private static final Logger LOG = LoggerFactory.getLogger(IterativeDeepeningMoveGenerator.class);
   private final NonBlockingMoveGenerator<WordsWithFriendsBoard, FixedDepthGeneratorParams, WwfMoveGeneratorReturnContext> fixedDepthGenerator;
-  private WordsWithFriendsMoveGenerator<?, ?> allMovesGenerator;
+  private WordsWithFriendsMoveGenerator<?, ?, ?> allMovesGenerator;
 
-  public IterativeDeepeningMoveGenerator(WordsWithFriendsMoveGenerator<?,?> allMovesGenerator) {
+  public IterativeDeepeningMoveGenerator(WordsWithFriendsMoveGenerator<?,?,?> allMovesGenerator) {
     this.allMovesGenerator = allMovesGenerator;
     this.fixedDepthGenerator = MoveGenerators.asNonBlockingGenerator(new FixedDepthMoveGenerator(allMovesGenerator));
   }
@@ -148,5 +151,10 @@ public class IterativeDeepeningMoveGenerator
   @Override
   protected WwfMoveGeneratorReturnContext createReturnContext(Move move) {
     return allMovesGenerator.createReturnContext(move);
+  }
+
+  @Override
+  public IterativeDeepeningGeneratorParams.Builder getParamsBuilder() {
+    return new IterativeDeepeningGeneratorParams.Builder();
   }
 }

@@ -14,7 +14,7 @@ public class WwfMinimaxLocalParams extends WwfMoveGeneratorParams {
   private final double cacheMissFlushFactor;
   private final int diffThreshold;
 
-  public static class Builder extends AbstractBuilder<WwfMinimaxLocalParams, Builder> {
+  public static class Builder extends AbstractParamsBuilder<WwfMinimaxLocalParams, Builder> {
     private int diffThreshold;
     private int cacheSize;
     private double cacheMissFlushFactor;
@@ -27,7 +27,7 @@ public class WwfMinimaxLocalParams extends WwfMoveGeneratorParams {
     }
 
     @Override
-    protected WwfMinimaxLocalParams build(Rack rack, WordsWithFriendsBoard board) {
+    public WwfMinimaxLocalParams build(Rack rack, WordsWithFriendsBoard board) {
       throw new UnsupportedOperationException();
     }
 

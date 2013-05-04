@@ -120,7 +120,9 @@ class RobotConsumer implements Runnable {
           WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
           // Generate a move
-          WwfMoveGeneratorParams params = buildParams(state);
+          WwfMoveGeneratorParams params = getMoveGenerator()
+              .getParamsBuilder()
+              .build(state);
 
           Move generatedMove = moveCache.containsKey(state.getId())
             ? moveCache.get(state.getId())
@@ -156,16 +158,5 @@ class RobotConsumer implements Runnable {
         LOG.error("Exception while consuming game state", e);
       }
     }
-  }
-
-  /**
-   * Build MoveGeneratorParams for use with a particular game state
-   *
-   *
-   * @param state
-   * @return
-   */
-  public IterativeDeepeningGeneratorParams buildParams(GameState state) {
-    return new IterativeDeepeningGeneratorParams.Builder().build(state);
   }
 }

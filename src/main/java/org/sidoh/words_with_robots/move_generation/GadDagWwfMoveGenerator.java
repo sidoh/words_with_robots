@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * A move generator that uses a GADDAG.
  */
-public class GadDagWwfMoveGenerator extends WordsWithFriendsMoveGenerator<WwfMoveGeneratorParams, WwfMoveGeneratorReturnContext> {
+public class GadDagWwfMoveGenerator extends WordsWithFriendsMoveGenerator<WwfMoveGeneratorParams, WwfMoveGeneratorReturnContext, WwfMoveGeneratorParams.Builder> {
   private final GadDag gaddag;
 
   public GadDagWwfMoveGenerator(GadDag gaddag) {
@@ -52,6 +52,11 @@ public class GadDagWwfMoveGenerator extends WordsWithFriendsMoveGenerator<WwfMov
   @Override
   protected WwfMoveGeneratorReturnContext createReturnContext(Move move) {
     return new WwfMoveGeneratorReturnContext(move);
+  }
+
+  @Override
+  public WwfMoveGeneratorParams.Builder getParamsBuilder() {
+    return new WwfMoveGeneratorParams.Builder();
   }
 
   private void gen(WordsWithFriendsBoard board, SlotIterator.Iterator itr, String word, Set<Tile> tiles, GadDagEdge edge, Move move, Set<Move> moves) {

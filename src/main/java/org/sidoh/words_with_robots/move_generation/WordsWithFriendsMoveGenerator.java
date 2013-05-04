@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
+import org.sidoh.words_with_robots.move_generation.params.AbstractParamsBuilder;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParams;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.TileBuilder;
@@ -26,7 +27,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-public abstract class WordsWithFriendsMoveGenerator<P extends WwfMoveGeneratorParams, R extends WwfMoveGeneratorReturnContext>
+public abstract class WordsWithFriendsMoveGenerator<P extends WwfMoveGeneratorParams,
+                                                    R extends WwfMoveGeneratorReturnContext,
+                                                    B extends AbstractParamsBuilder<P, B>>
   implements MoveGenerator<WordsWithFriendsBoard, P, R> {
 
   private static final Logger LOG = LoggerFactory.getLogger(WordsWithFriendsMoveGenerator.class);
@@ -246,6 +249,12 @@ public abstract class WordsWithFriendsMoveGenerator<P extends WwfMoveGeneratorPa
    * @return
    */
   protected abstract R createReturnContext(Move move);
+
+  /**
+   *
+   * @return an instance of the parameters builder for this move generator
+   */
+  public abstract B getParamsBuilder();
 
   /**
    * Rather than sticking all possible moves into memory, this allows the consumer to iterate over possible moves.
