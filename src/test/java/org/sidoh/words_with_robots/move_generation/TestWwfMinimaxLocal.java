@@ -1,11 +1,8 @@
 package org.sidoh.words_with_robots.move_generation;
 
-import org.sidoh.words_with_robots.WordsWithRobotsTestCase;
-
 import org.apache.thrift.TException;
+import org.sidoh.words_with_robots.WordsWithRobotsTestCase;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
-import org.sidoh.words_with_robots.move_generation.old_params.MoveGeneratorParams;
-import org.sidoh.words_with_robots.move_generation.old_params.WwfMoveGeneratorParamKey;
 import org.sidoh.words_with_robots.move_generation.params.WwfMinimaxLocalParams;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
@@ -31,8 +28,6 @@ public class TestWwfMinimaxLocal extends WordsWithRobotsTestCase {
     );
     GadDagWwfMoveGenerator baseGen = new GadDagWwfMoveGenerator(dict);
     WwfMinimaxLocal gen = new WwfMinimaxLocal(baseGen);
-    MoveGeneratorParams params = new MoveGeneratorParams()
-      .set(WwfMoveGeneratorParamKey.GAME_STATE, new GameState(state));
 
     playWord(board, 7, 5, "ENTOPIC", WordOrientation.HORIZONTAL, true);
     playWord(board, 8, 8, "RIF", WordOrientation.HORIZONTAL, true);

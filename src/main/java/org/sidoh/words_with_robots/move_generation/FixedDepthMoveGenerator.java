@@ -3,8 +3,8 @@ package org.sidoh.words_with_robots.move_generation;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MinMaxPriorityQueue;
 import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
-import org.sidoh.words_with_robots.move_generation.old_params.PreemptionContext;
 import org.sidoh.words_with_robots.move_generation.params.FixedDepthGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.util.MoveScoreComparator;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
@@ -30,7 +30,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator<Fixed
   private final WordsWithFriendsMoveGenerator<?,?> inner;
   private static final GameStateHelper stateHelper = GameStateHelper.getInstance();
 
-  public FixedDepthMoveGenerator(WordsWithFriendsMoveGenerator inner) {
+  public FixedDepthMoveGenerator(WordsWithFriendsMoveGenerator<?, ? extends WwfMoveGeneratorReturnContext> inner) {
     this.inner = inner;
   }
 
@@ -75,8 +75,7 @@ public class FixedDepthMoveGenerator extends WordsWithFriendsMoveGenerator<Fixed
         .setReachedTerminalState( closure.getRack() == null || closure.getRack().getTilesSize() == 0 );
     }
 
-    PreemptionContext preemptionContext = params.getPreemptionContext();
-    if ( preemptionContext.getPreemptState() == PreemptionContext.State.STRONG_PREEMPT ) {
+    if ( Thread.currentThread().isInterrupted() ) {
       return closure;
     }
 

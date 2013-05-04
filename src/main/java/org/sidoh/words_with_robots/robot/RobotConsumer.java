@@ -3,10 +3,6 @@ package org.sidoh.words_with_robots.robot;
 import com.google.common.collect.Maps;
 import org.apache.thrift.TException;
 import org.sidoh.words_with_robots.move_generation.WordsWithFriendsMoveGenerator;
-import org.sidoh.words_with_robots.move_generation.old_params.FixedDepthParamKey;
-import org.sidoh.words_with_robots.move_generation.old_params.MoveGeneratorParams;
-import org.sidoh.words_with_robots.move_generation.old_params.PreemptionContext;
-import org.sidoh.words_with_robots.move_generation.old_params.WwfMoveGeneratorParamKey;
 import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParams;
 import org.sidoh.words_with_robots.util.io.StatePrinter;
@@ -45,7 +41,6 @@ class RobotConsumer implements Runnable {
   private final RobotSettings settings;
   private final RobotProducer producer;
   private final StatefulApiProvider apiProvider;
-  private PreemptionContext preemptContext;
 
   /**
    *
@@ -134,10 +129,10 @@ class RobotConsumer implements Runnable {
 
           // Submit the generated move
           try {
-//            GameState updatedState = apiProvider.makeMove(state, stateHelper.createMoveSubmissionFromPlay(generatedMove));
+            GameState updatedState = apiProvider.makeMove(state, stateHelper.createMoveSubmissionFromPlay(generatedMove));
             moveCache.remove(state.getId());
 
-//            LOG.info("Game state after move:\n{}", statePrinter.getGameStateAsString(updatedState));
+            LOG.info("Game state after move:\n{}", statePrinter.getGameStateAsString(updatedState));
           }
           catch (MoveValidationException e) {
             LOG.error("Permanent error submitting move -- generated move was invalid", e);
@@ -152,9 +147,6 @@ class RobotConsumer implements Runnable {
         finally {
           // Mark the game as processed
           producer.releaseGame(state);
-          synchronized ( this ) {
-            preemptContext = null;
-          }
         }
       }
       catch (InterruptedException e) {
@@ -167,34 +159,6 @@ class RobotConsumer implements Runnable {
   }
 
   /**
-   *
-   * @return true if this consumer is currently processing a game
-   */
-  public synchronized boolean isOccupied() {
-    return preemptContext != null;
-  }
-
-  /**
-   *
-   */
-  public synchronized void weakPreempt() {
-    if ( preemptContext == null ) {
-      throw new IllegalStateException("Can't preempt -- not processing");
-    }
-    preemptContext.weakPreempt();
-  }
-
-  /**
-   * Causes current
-   */
-  public synchronized void strongPreempt() {
-    if ( preemptContext == null ) {
-      throw new IllegalStateException("Can't preempt -- not processing");
-    }
-    preemptContext.strongPreempt();
-  }
-
-  /**
    * Build MoveGeneratorParams for use with a particular game state
    *
    *
@@ -202,12 +166,6 @@ class RobotConsumer implements Runnable {
    * @return
    */
   public IterativeDeepeningGeneratorParams buildParams(GameState state) {
-    synchronized (this) {
-      preemptContext = new PreemptionContext();
-    }
-
-    return new IterativeDeepeningGeneratorParams.Builder()
-      .setPreemptionContext(preemptContext)
-      .build(state);
+    return new IterativeDeepeningGeneratorParams.Builder().build(state);
   }
 }

@@ -1,7 +1,6 @@
 package org.sidoh.words_with_robots.move_generation.params;
 
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
-import org.sidoh.words_with_robots.move_generation.old_params.PreemptionContext;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
 import org.sidoh.wwf_api.types.game_state.Rack;
@@ -10,14 +9,12 @@ public class IterativeDeepeningGeneratorParams extends WwfMoveGeneratorParams {
   private final long maxExecutionTime;
   private final long minExecutionTime;
   private final boolean verboseStats;
-  private final PreemptionContext preemptionContext;
   private final FixedDepthGeneratorParams.Builder fixedDepthParamsBuilder;
 
   private static class DefaultValues {
     public static final long MAX_EXECUTION_TIME = 120000L;
     public static final long MIN_EXECUTION_TIME = 10000L;
     public static final boolean VERBOSE_STATS_ENABLED = true;
-    public static final PreemptionContext PREEMPTION_CONTEXT = null;
     public static final FixedDepthGeneratorParams.Builder FIXED_DEPTH_PARAMS_BUILDER
       = new FixedDepthGeneratorParams.Builder();
   }
@@ -26,7 +23,6 @@ public class IterativeDeepeningGeneratorParams extends WwfMoveGeneratorParams {
     private long maxExecutionTime = DefaultValues.MAX_EXECUTION_TIME;
     private long minExecutionTime = DefaultValues.MIN_EXECUTION_TIME;
     private boolean verboseStats = DefaultValues.VERBOSE_STATS_ENABLED;
-    private PreemptionContext preemptionContext = DefaultValues.PREEMPTION_CONTEXT;
     private FixedDepthGeneratorParams.Builder fixedDepthParamsBuilder = DefaultValues.FIXED_DEPTH_PARAMS_BUILDER;
 
     @Override
@@ -43,7 +39,6 @@ public class IterativeDeepeningGeneratorParams extends WwfMoveGeneratorParams {
         maxExecutionTime,
         minExecutionTime,
         verboseStats,
-        preemptionContext,
         fixedDepthParamsBuilder);
     }
 
@@ -89,16 +84,6 @@ public class IterativeDeepeningGeneratorParams extends WwfMoveGeneratorParams {
 
     /**
      *
-     * @param preemptionContext
-     * @return
-     */
-    public Builder setPreemptionContext(PreemptionContext preemptionContext) {
-      this.preemptionContext = preemptionContext;
-      return this;
-    }
-
-    /**
-     *
      * @param fixedDepthParamsBuilder
      * @return
      */
@@ -115,13 +100,11 @@ public class IterativeDeepeningGeneratorParams extends WwfMoveGeneratorParams {
                                               long maxExecutionTime,
                                               long minExecutionTime,
                                               boolean verboseStats,
-                                              PreemptionContext preemptionContext,
                                               FixedDepthGeneratorParams.Builder fixedDepthParamsBuilder) {
     super(rack, board, evalFn, state);
     this.maxExecutionTime = maxExecutionTime;
     this.minExecutionTime = minExecutionTime;
     this.verboseStats = verboseStats;
-    this.preemptionContext = preemptionContext;
     this.fixedDepthParamsBuilder = fixedDepthParamsBuilder;
   }
 
@@ -135,10 +118,6 @@ public class IterativeDeepeningGeneratorParams extends WwfMoveGeneratorParams {
 
   public boolean isVerboseStats() {
     return verboseStats;
-  }
-
-  public PreemptionContext getPreemptionContext() {
-    return preemptionContext;
   }
 
   public FixedDepthGeneratorParams.Builder getFixedDepthParamsBuilder() {

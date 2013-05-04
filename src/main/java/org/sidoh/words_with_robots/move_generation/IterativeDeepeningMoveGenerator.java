@@ -1,33 +1,34 @@
 package org.sidoh.words_with_robots.move_generation;
 
 import com.google.common.collect.Maps;
+import org.sidoh.words_with_robots.move_generation.context.NonBlockingReturnContext;
 import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
-import org.sidoh.words_with_robots.move_generation.old_params.FixedDepthParamKey;
-import org.sidoh.words_with_robots.move_generation.old_params.IterativeDeepeningParamKey;
-import org.sidoh.words_with_robots.move_generation.old_params.MoveGeneratorParams;
-import org.sidoh.words_with_robots.move_generation.old_params.PreemptionContext;
-import org.sidoh.words_with_robots.move_generation.old_params.WwfMoveGeneratorParamKey;
 import org.sidoh.words_with_robots.move_generation.params.FixedDepthGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningGeneratorParams;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
-import org.sidoh.wwf_api.types.api.MoveType;
 import org.sidoh.wwf_api.types.game_state.Rack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class IterativeDeepeningMoveGenerator
   extends WordsWithFriendsMoveGenerator<IterativeDeepeningGeneratorParams, WwfMoveGeneratorReturnContext> {
 
   private static final Logger LOG = LoggerFactory.getLogger(IterativeDeepeningMoveGenerator.class);
-  private final FixedDepthMoveGenerator allMovesGenerator;
+  private final NonBlockingMoveGenerator<WordsWithFriendsBoard, FixedDepthGeneratorParams, WwfMoveGeneratorReturnContext> fixedDepthGenerator;
+  private WordsWithFriendsMoveGenerator<?, ?> allMovesGenerator;
 
   public IterativeDeepeningMoveGenerator(WordsWithFriendsMoveGenerator<?,?> allMovesGenerator) {
-    this.allMovesGenerator = new FixedDepthMoveGenerator(allMovesGenerator);
+    this.allMovesGenerator = allMovesGenerator;
+    this.fixedDepthGenerator = MoveGenerators.asNonBlockingGenerator(new FixedDepthMoveGenerator(allMovesGenerator));
   }
 
   @Override
@@ -39,58 +40,60 @@ public class IterativeDeepeningMoveGenerator
     Rack rack = params.getRack();
     WordsWithFriendsBoard board = params.getBoard();
 
-    // Get our preemption context, which will allow us to preempt the underlying fixed store
-    // when its minimum time to run is up
-   PreemptionContext preemptionContext = params.getPreemptionContext();
-
-    // Set up a kill signal so that we can stop execution when we want
-    PreemptionContext childPreemptionContext = new PreemptionContext();
-
     // Figure out how long we're allowed to run
     long startTime = System.currentTimeMillis();
+    long expireTime = System.currentTimeMillis() + params.getMaxExecutionTime();
 
     // Set up and start a producer thread
-    IterativeDeepeningProducer producer = new IterativeDeepeningProducer(rack,
-      board,
-      state,
-      preemptionContext,
-      params.getFixedDepthParamsBuilder().clone().setPreemptionContext(childPreemptionContext));
-    Thread producerThread = new Thread(producer);
-    producerThread.start();
+    Move bestMove = null;
+    int currentDepth = 2;
+    FixedDepthGeneratorParams.Builder paramsBuilder = params.getFixedDepthParamsBuilder();
 
-    // Wait until execution completes or we run out of time
-    while ( !producer.isComplete() && !isExpired(producer, startTime, preemptionContext, params) ) {
+    while ( bestMove == null || !isExpired(startTime, params)) {
+      long timeRemaining = expireTime - System.currentTimeMillis();
+
+      FixedDepthGeneratorParams childParams = paramsBuilder
+        .setMaxDepth(currentDepth)
+        .build(state);
+      NonBlockingReturnContext<WwfMoveGeneratorReturnContext> answer = fixedDepthGenerator.generateMove(childParams);
+      Future<WwfMoveGeneratorReturnContext> future = answer.getFuture();
+
       try {
-        Thread.sleep(100L);
-      } catch (InterruptedException e) {
+        // If we haven't found a move at all, wait indefinitely. Otherwise, only allow timeRemaining milliseconds
+        // to complete the computation
+        if ( bestMove == null ) {
+          bestMove = future.get().getMove();
+        }
+        else {
+          bestMove = future.get(timeRemaining, TimeUnit.MILLISECONDS).getMove();
+        }
+      }
+      catch (InterruptedException e) {
+        LOG.debug("interrupted -- returning best move found: {}", bestMove);
+        return new WwfMoveGeneratorReturnContext(bestMove);
+      }
+      catch (ExecutionException e) {
         throw new RuntimeException(e);
       }
-    }
+      catch (TimeoutException e) {
+        return new WwfMoveGeneratorReturnContext(bestMove);
+      }
 
-    LOG.info("Preempting producer...");
-
-    // Kill the move generator
-    childPreemptionContext.strongPreempt();
-    try {
-      producerThread.join();
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      currentDepth++;
     }
 
     // Spit out the best move that we've found
-    LOG.info("Made it to depth {}", producer.currentDepth-2);
-    stats.put(getStatsKey("max_depth"), producer.currentDepth-2);
+    LOG.info("Made it to depth {}", currentDepth);
+    stats.put(getStatsKey("max_depth"), currentDepth);
 
     // Find the index of the produced move
-    WwfMoveGeneratorReturnContext bestMove = producer.getBestMove();
-
     if ( verboseStats ) {
-      int moveRank = findMoveRank(rack, board, bestMove.getMove());
+      int moveRank = findMoveRank(rack, board, bestMove);
       stats.put(getStatsKey("move_rank"), moveRank);
       stats.put(getStatsKey("turn_index"), state.getAllMoves().size());
     }
 
-    return producer.getBestMove();
+    return new WwfMoveGeneratorReturnContext(bestMove);
   }
 
   /**
@@ -118,35 +121,18 @@ public class IterativeDeepeningMoveGenerator
    * Determine whether or not execution is expired
    *
    *
-   * @param producer
    * @param startTime time at which execution began
-   * @param pcontext preemption context
    * @param params params called
    * @return
    */
-  protected static boolean isExpired(IterativeDeepeningProducer producer, long startTime, PreemptionContext pcontext, IterativeDeepeningGeneratorParams params) {
-    // Don't expire if we haven't found a move yet
-    if ( producer.getBestMove() == null ) {
-      return false;
-    }
-
-    long minRunTime = params.getMinExecutionTime();
-    long maxRunTime = params.getMaxExecutionTime();
-
-    // If we're preempted strongly, we must stop execution immediately
-    if ( pcontext.getPreemptState() == PreemptionContext.State.STRONG_PREEMPT ) {
+  protected static boolean isExpired(long startTime, IterativeDeepeningGeneratorParams params) {
+    // Otherwise, if we've been interrupted, stop immediately
+    if ( Thread.currentThread().isInterrupted() ) {
       return true;
     }
 
-    long expireTime;
-    if ( pcontext.getPreemptState() == PreemptionContext.State.WEAK_PREEMPT ) {
-      expireTime = startTime + minRunTime;
-    }
-    else {
-      expireTime = startTime + maxRunTime;
-    }
-
-    return System.currentTimeMillis() >= expireTime;
+    // Lastly, expire if we're out of time
+    return System.currentTimeMillis() >= startTime + params.getMaxExecutionTime();
   }
 
   @Override
@@ -162,75 +148,5 @@ public class IterativeDeepeningMoveGenerator
   @Override
   protected WwfMoveGeneratorReturnContext createReturnContext(Move move) {
     return allMovesGenerator.createReturnContext(move);
-  }
-
-  private class IterativeDeepeningProducer implements Runnable {
-    private final WordsWithFriendsBoard board;
-    private final Rack rack;
-    private int currentDepth;
-    private WwfMoveGeneratorReturnContext currentBest;
-    private boolean complete;
-    private final GameState state;
-    private final PreemptionContext preemptionContext;
-    private final FixedDepthGeneratorParams.Builder fixedDepthParamsBuilder;
-
-    public IterativeDeepeningProducer(Rack rack,
-                                      WordsWithFriendsBoard board,
-                                      GameState state,
-                                      PreemptionContext preemptionContext,
-                                      FixedDepthGeneratorParams.Builder fixedDepthParamsBuilder) {
-      this.rack = rack;
-      this.board = board;
-      this.state = state;
-      this.preemptionContext = preemptionContext;
-      this.fixedDepthParamsBuilder = fixedDepthParamsBuilder;
-      this.currentDepth = 2;
-      this.complete = false;
-    }
-
-    @Override
-    public void run() {
-      int numTiles = (WordsWithFriendsBoard.TILES_PER_PLAYER*2)
-        + state.getRemainingTilesSize();
-
-      while ( preemptionContext.getPreemptState() == PreemptionContext.State.NOT_PREEMPTED ) {
-        LOG.info("Moving to depth {}", currentDepth);
-        FixedDepthGeneratorParams params = fixedDepthParamsBuilder
-          .setMaxDepth(currentDepth)
-          .build(state);
-
-        try {
-          WwfMoveGeneratorReturnContext best = allMovesGenerator.generateMove(params);
-
-          // Don't update the best if we've been preempted.
-          if ( preemptionContext.getPreemptState() == PreemptionContext.State.NOT_PREEMPTED ) {
-            currentBest = best;
-          }
-        }
-        catch ( Exception e ) {
-          LOG.error("Exception generating move: {}", e);
-          return;
-        }
-
-        // Don't continue if a terminal state was reached
-        // don't continue if there have been more moves than there were tiles
-        if ( currentBest.getMove().getMoveType() == MoveType.PASS
-          || currentDepth > numTiles) {
-          LOG.info("Reached terminal state at depth {}", currentDepth);
-          complete = true;
-          break;
-        }
-
-        currentDepth += 1;
-      }
-    }
-
-    public boolean isComplete() {
-      return complete;
-    }
-
-    public WwfMoveGeneratorReturnContext getBestMove() {
-      return currentBest;
-    }
   }
 }

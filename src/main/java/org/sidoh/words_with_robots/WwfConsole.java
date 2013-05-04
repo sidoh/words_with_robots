@@ -12,10 +12,7 @@ import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorRetur
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 import org.sidoh.words_with_robots.move_generation.eval.SummingEvalFunction;
-import org.sidoh.words_with_robots.move_generation.old_params.MoveGeneratorParams;
-import org.sidoh.words_with_robots.move_generation.old_params.WwfMoveGeneratorParamKey;
 import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningGeneratorParams;
-import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParams;
 import org.sidoh.words_with_robots.util.io.StatePrinter;
 import org.sidoh.words_with_robots.util.io.StdinPrompts;
 import org.sidoh.wwf_api.AccessTokenRetriever;

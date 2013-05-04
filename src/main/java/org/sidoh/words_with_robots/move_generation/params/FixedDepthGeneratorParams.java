@@ -1,7 +1,6 @@
 package org.sidoh.words_with_robots.move_generation.params;
 
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
-import org.sidoh.words_with_robots.move_generation.old_params.PreemptionContext;
 import org.sidoh.words_with_robots.move_generation.swap_strategies.MinScoreThresholdSwapStrategy;
 import org.sidoh.words_with_robots.move_generation.swap_strategies.SwapStrategy;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
@@ -13,14 +12,12 @@ public class FixedDepthGeneratorParams extends WwfMoveGeneratorParams {
   private final int moveCacheSize;
   private final int minScore;
   private final int branchingFactorLimit;
-  private final PreemptionContext preemptionContext;
   private final SwapStrategy swapStrategy;
 
   private static class DefaultValues {
     public static final int MOVE_CACHE_SIZE = 0;
     public static final int MIN_SCORE = 3;
     public static final int BRANCHING_FACTOR_LIMIT = 20;
-    public static final PreemptionContext PREEMPTION_CONTEXT = new PreemptionContext();
     public static final SwapStrategy SWAP_STRATEGY = new MinScoreThresholdSwapStrategy();
     public static final int MAX_DEPTH = 2;
   }
@@ -30,7 +27,6 @@ public class FixedDepthGeneratorParams extends WwfMoveGeneratorParams {
     protected int moveCacheSize = DefaultValues.MOVE_CACHE_SIZE;
     protected int minScore = DefaultValues.MIN_SCORE;
     protected int branchingFactorLimit = DefaultValues.BRANCHING_FACTOR_LIMIT;
-    protected PreemptionContext preemptionContext = DefaultValues.PREEMPTION_CONTEXT;
     protected SwapStrategy swapStrategy = DefaultValues.SWAP_STRATEGY;
 
     public FixedDepthGeneratorParams.Builder clone() {
@@ -39,7 +35,6 @@ public class FixedDepthGeneratorParams extends WwfMoveGeneratorParams {
       builder.moveCacheSize = moveCacheSize;
       builder.minScore = minScore;
       builder.branchingFactorLimit = branchingFactorLimit;
-      builder.preemptionContext = preemptionContext;
       builder.swapStrategy = swapStrategy;
       return builder;
     }
@@ -59,7 +54,6 @@ public class FixedDepthGeneratorParams extends WwfMoveGeneratorParams {
         moveCacheSize,
         minScore,
         branchingFactorLimit,
-        preemptionContext,
         swapStrategy);
     }
 
@@ -112,20 +106,6 @@ public class FixedDepthGeneratorParams extends WwfMoveGeneratorParams {
       return this;
     }
 
-
-    /**
-     * FixedDepthMoveGenerator will look for this signal at every node in the search tree. If it's set
-     * to true, it will stop execution and return the best value it's found so far. Use this to stop
-     * execution early.
-     *
-     * @param preemptionContext the value to assign to preemption context
-     * @return this
-     */
-    public Builder setPreemptionContext(PreemptionContext preemptionContext) {
-      this.preemptionContext = preemptionContext;
-      return this;
-    }
-
     /**
      * Sets the maximum depth to search
      *
@@ -146,14 +126,12 @@ public class FixedDepthGeneratorParams extends WwfMoveGeneratorParams {
                                       int moveCacheSize,
                                       int minScore,
                                       int branchingFactorLimit,
-                                      PreemptionContext preemptionContext,
                                       SwapStrategy swapStrategy) {
     super(rack, board, evalFn, state);
     this.maxDepth = maxDepth;
     this.moveCacheSize = moveCacheSize;
     this.minScore = minScore;
     this.branchingFactorLimit = branchingFactorLimit;
-    this.preemptionContext = preemptionContext;
     this.swapStrategy = swapStrategy;
   }
 
@@ -171,10 +149,6 @@ public class FixedDepthGeneratorParams extends WwfMoveGeneratorParams {
 
   public int getBranchingFactorLimit() {
     return branchingFactorLimit;
-  }
-
-  public PreemptionContext getPreemptionContext() {
-    return preemptionContext;
   }
 
   public SwapStrategy getSwapStrategy() {

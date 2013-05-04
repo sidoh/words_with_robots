@@ -6,7 +6,6 @@ import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
 import org.sidoh.wwf_api.types.game_state.BoardStorage;
 import org.sidoh.wwf_api.types.game_state.Rack;
-import org.sidoh.wwf_api.types.game_state.Tile;
 
 /**
  * Defines parameters used by all WordsWithFriends move generators

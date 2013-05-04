@@ -1,4 +1,4 @@
-package org.sidoh.words_with_robots.move_generation;
+package org.sidoh.words_with_robots.move_generation.util;
 
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
@@ -8,7 +8,7 @@ import org.sidoh.wwf_api.types.api.GameState;
 import java.util.Collections;
 import java.util.Comparator;
 
-class MoveScoreComparator implements Comparator<Move> {
+public class MoveScoreComparator implements Comparator<Move> {
   private final EvaluationFunction fn;
   private final GameState state;
 

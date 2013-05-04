@@ -5,7 +5,6 @@ import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
 import org.sidoh.words_with_robots.move_generation.GadDagWwfMoveGenerator;
 import org.sidoh.words_with_robots.move_generation.IterativeDeepeningMoveGenerator;
 import org.sidoh.words_with_robots.move_generation.WordsWithFriendsMoveGenerator;
-import org.sidoh.words_with_robots.move_generation.WwfMinimaxLocal;
 import org.sidoh.words_with_robots.util.dictionary.DictionaryHelper;
 import org.sidoh.wwf_api.AccessTokenRetriever;
 import org.sidoh.wwf_api.StatefulApiProvider;
@@ -90,10 +89,6 @@ public class Robot {
 
     Thread producerThread = new Thread(producer);
     producerThread.start();
-
-    RobotPreempter preempter = new RobotPreempter(settings, producer, consumers);
-    Thread preempterThread = new Thread(preempter);
-    preempterThread.start();
   }
 
   public static void main(String[] args) throws IOException {

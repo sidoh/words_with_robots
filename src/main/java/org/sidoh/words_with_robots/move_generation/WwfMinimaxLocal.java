@@ -5,6 +5,7 @@ import com.google.common.collect.MinMaxPriorityQueue;
 import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
 import org.sidoh.words_with_robots.move_generation.params.WwfMinimaxLocalParams;
+import org.sidoh.words_with_robots.move_generation.util.MoveScoreComparator;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
