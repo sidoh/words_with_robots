@@ -6,6 +6,7 @@ import org.apache.thrift.TException;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
 import org.sidoh.words_with_robots.move_generation.old_params.MoveGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.old_params.WwfMoveGeneratorParamKey;
+import org.sidoh.words_with_robots.move_generation.params.WwfMinimaxLocalParams;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
@@ -15,6 +16,9 @@ import org.sidoh.wwf_api.types.game_state.WordOrientation;
 import java.io.IOException;
 
 public class TestWwfMinimaxLocal extends WordsWithRobotsTestCase {
+  private static final WwfMinimaxLocalParams.Builder paramsBuilder
+    = new WwfMinimaxLocalParams.Builder();
+
   public void testIt() throws TException, IOException {
     GameState state = loadGameState("TestWwfMinimaxLocal.testIt.json");
 
@@ -36,11 +40,11 @@ public class TestWwfMinimaxLocal extends WordsWithRobotsTestCase {
     Rack myRack = buildRack("ETOZLAX");
     Rack opRack = buildRack("EUREWUO");
 
-    board.move(gen.generateMove(myRack, board, params));
+    board.move(gen.generateMove(paramsBuilder.build(state)).getMove());
 
     System.out.println(board);
 
-    baseGen.generateMove(opRack, board, params);
+    baseGen.generateMove(paramsBuilder.build(state));
   }
 
   public void testDanB() throws IOException, TException {
@@ -51,18 +55,15 @@ public class TestWwfMinimaxLocal extends WordsWithRobotsTestCase {
     );
     GadDagWwfMoveGenerator baseGen = new GadDagWwfMoveGenerator(dict);
     WwfMinimaxLocal gen = new WwfMinimaxLocal(baseGen);
-    MoveGeneratorParams params = new MoveGeneratorParams()
-      .set(WwfMoveGeneratorParamKey.GAME_STATE, state);
     WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
     Rack myRack = buildRack("BOEESZR");
     Rack opRack = buildRack("RRVFRNA");
 
-    board.move(gen.generateMove(myRack, board, params));
-    Move opMove = baseGen.generateMove(opRack, board, params);
+    Move move = gen.generateMove(paramsBuilder.build(state)).getMove();
+    board.move(move);
+    state = stateHelper.applyMove(state, move);
 
-    assertEquals("moves should match",
-      opMove,
-      params.get(WwfMoveGeneratorParamKey.BEST_OPPONENT_MOVE));
+    // TODO: test something...
   }
 }

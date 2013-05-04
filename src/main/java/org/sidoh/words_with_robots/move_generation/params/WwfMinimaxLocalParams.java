@@ -19,11 +19,16 @@ public class WwfMinimaxLocalParams extends WwfMoveGeneratorParams {
     private int cacheSize;
     private double cacheMissFlushFactor;
 
-    protected Builder() {
+    public Builder() {
       super();
       this.cacheSize = DEFAULT_MOVE_CACHE_SIZE;
       this.cacheMissFlushFactor = DEFAULT_CACHE_MISS_FLUSH_FACTOR;
       this.diffThreshold = DEFAULT_MOVE_DIFF_THRESHOLD;
+    }
+
+    @Override
+    protected WwfMinimaxLocalParams build(Rack rack, WordsWithFriendsBoard board) {
+      throw new UnsupportedOperationException();
     }
 
     @Override
@@ -60,5 +65,9 @@ public class WwfMinimaxLocalParams extends WwfMoveGeneratorParams {
 
   public int getDiffThreshold() {
     return diffThreshold;
+  }
+
+  public GameState getGameState() {
+    return super.getGameState();
   }
 }

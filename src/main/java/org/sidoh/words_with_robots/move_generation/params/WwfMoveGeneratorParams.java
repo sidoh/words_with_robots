@@ -6,6 +6,7 @@ import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
 import org.sidoh.wwf_api.types.game_state.BoardStorage;
 import org.sidoh.wwf_api.types.game_state.Rack;
+import org.sidoh.wwf_api.types.game_state.Tile;
 
 /**
  * Defines parameters used by all WordsWithFriends move generators
@@ -15,6 +16,14 @@ public class WwfMoveGeneratorParams extends MoveGeneratorParams<WordsWithFriends
   private final GameState state;
 
   public static class Builder extends AbstractBuilder<WwfMoveGeneratorParams, Builder> {
+    @Override
+    public WwfMoveGeneratorParams build(Rack rack, WordsWithFriendsBoard board) {
+      return new WwfMoveGeneratorParams(rack,
+        board,
+        getEvaluationFunction(),
+        null);
+    }
+
     @Override
     public WwfMoveGeneratorParams build(GameState state) {
       return new WwfMoveGeneratorParams(buildRack(state),
@@ -47,9 +56,19 @@ public class WwfMoveGeneratorParams extends MoveGeneratorParams<WordsWithFriends
     }
 
     /**
+     *
+     * @param rack the player's rack
+     * @param board the player's board
+     * @return instace of the built object
+     */
+    protected abstract T build(Rack rack, WordsWithFriendsBoard board);
+
+    /**
+     *
+     * @param state the game state. rack and board will be extracted
      * @return an instance of the built object
      */
-    public abstract T build(GameState state);
+    protected abstract T build(GameState state);
 
     /**
      *
@@ -96,7 +115,7 @@ public class WwfMoveGeneratorParams extends MoveGeneratorParams<WordsWithFriends
 
   /**
    *
-   * @return the entire game state object
+   * @return game state object -- may be null
    */
   public GameState getGameState() {
     return state;

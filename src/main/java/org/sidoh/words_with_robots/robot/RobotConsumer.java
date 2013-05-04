@@ -134,10 +134,10 @@ class RobotConsumer implements Runnable {
 
           // Submit the generated move
           try {
-            GameState updatedState = apiProvider.makeMove(state, stateHelper.createMoveSubmissionFromPlay(generatedMove));
+//            GameState updatedState = apiProvider.makeMove(state, stateHelper.createMoveSubmissionFromPlay(generatedMove));
             moveCache.remove(state.getId());
 
-            LOG.info("Game state after move:\n{}", statePrinter.getGameStateAsString(updatedState));
+//            LOG.info("Game state after move:\n{}", statePrinter.getGameStateAsString(updatedState));
           }
           catch (MoveValidationException e) {
             LOG.error("Permanent error submitting move -- generated move was invalid", e);

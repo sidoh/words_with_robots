@@ -8,11 +8,13 @@ import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
 import org.sidoh.words_with_robots.move_generation.GadDagWwfMoveGenerator;
 import org.sidoh.words_with_robots.move_generation.IterativeDeepeningMoveGenerator;
 import org.sidoh.words_with_robots.move_generation.WordsWithFriendsMoveGenerator;
+import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 import org.sidoh.words_with_robots.move_generation.eval.SummingEvalFunction;
 import org.sidoh.words_with_robots.move_generation.old_params.MoveGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.old_params.WwfMoveGeneratorParamKey;
+import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParams;
 import org.sidoh.words_with_robots.util.io.StatePrinter;
 import org.sidoh.words_with_robots.util.io.StdinPrompts;
@@ -49,7 +51,7 @@ public class WwfConsole {
   static final GadDag gaddag = new GadDag();
   static final WordsWithFriendsMoveGenerator allMovesGen
     = new GadDagWwfMoveGenerator(gaddag);
-  static WordsWithFriendsMoveGenerator moveGenerator
+  static WordsWithFriendsMoveGenerator<IterativeDeepeningGeneratorParams, WwfMoveGeneratorReturnContext> moveGenerator
     = new IterativeDeepeningMoveGenerator(allMovesGen);
   static StatefulApiProvider api;
   static final GameStateHelper stateHelper = GameStateHelper.getInstance();
@@ -78,7 +80,7 @@ public class WwfConsole {
 //          , new NewTilesEvalFunction()
         );
 
-        WwfMoveGeneratorParams params = new WwfMoveGeneratorParams.Builder()
+        IterativeDeepeningGeneratorParams params = new IterativeDeepeningGeneratorParams.Builder()
           .setEvaluationFunction(defaultEvalFunction)
           .build(state);
 

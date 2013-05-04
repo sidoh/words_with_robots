@@ -30,6 +30,11 @@ public class IterativeDeepeningGeneratorParams extends WwfMoveGeneratorParams {
     private FixedDepthGeneratorParams.Builder fixedDepthParamsBuilder = DefaultValues.FIXED_DEPTH_PARAMS_BUILDER;
 
     @Override
+    protected IterativeDeepeningGeneratorParams build(Rack rack, WordsWithFriendsBoard board) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public IterativeDeepeningGeneratorParams build(GameState state) {
       return new IterativeDeepeningGeneratorParams(buildRack(state),
         buildBoard(state),

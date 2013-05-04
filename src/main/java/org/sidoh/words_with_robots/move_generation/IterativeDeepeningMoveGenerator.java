@@ -54,7 +54,7 @@ public class IterativeDeepeningMoveGenerator
       board,
       state,
       preemptionContext,
-      params.getFixedDepthParamsBuilder());
+      params.getFixedDepthParamsBuilder().clone().setPreemptionContext(childPreemptionContext));
     Thread producerThread = new Thread(producer);
     producerThread.start();
 

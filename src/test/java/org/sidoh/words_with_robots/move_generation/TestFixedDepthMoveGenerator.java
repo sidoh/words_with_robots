@@ -6,6 +6,7 @@ import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
 import org.sidoh.words_with_robots.move_generation.old_params.FixedDepthParamKey;
 import org.sidoh.words_with_robots.move_generation.old_params.MoveGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.old_params.WwfMoveGeneratorParamKey;
+import org.sidoh.words_with_robots.move_generation.params.FixedDepthGeneratorParams;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
@@ -15,6 +16,9 @@ import org.sidoh.wwf_api.types.game_state.WordOrientation;
 import java.io.IOException;
 
 public class TestFixedDepthMoveGenerator extends WordsWithRobotsTestCase {
+  public static final FixedDepthGeneratorParams.Builder paramsBuilder
+    = new FixedDepthGeneratorParams.Builder();
+
   public void testItsDaMan() throws IOException, TException {
     GameState state = loadGameState("TestFixedDepthMoveGenerator.testItsdaman.bin");
 
@@ -38,10 +42,7 @@ public class TestFixedDepthMoveGenerator extends WordsWithRobotsTestCase {
     // Pretend it's our turn again
     state.getMeta().setCurrentMoveUserId(stateHelper.getOtherUser(state.getMeta().getCurrentMoveUserId(), state).getId());
 
-    MoveGeneratorParams params = new MoveGeneratorParams()
-      .set(FixedDepthParamKey.MAXIMUM_DEPTH, 8)
-      .set(WwfMoveGeneratorParamKey.GAME_STATE, state);
-    Move move = moveGenerator.generateMove(rack, board, params);
+    Move move = moveGenerator.generateMove(paramsBuilder.build(state)).getMove();
     board.move(move);
 
     // Here, the move should be 'TUB' on the B in 'BIGOT'. This is a lower scoring move than

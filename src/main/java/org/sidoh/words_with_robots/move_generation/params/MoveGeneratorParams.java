@@ -9,7 +9,7 @@ import org.sidoh.wwf_api.types.game_state.Rack;
  *
  * @param <T> the type of Board that this param container maintains
  */
-public abstract class MoveGeneratorParams<T extends Board> {
+public abstract class MoveGeneratorParams<T extends Board> implements Cloneable {
   private final Rack rack;
   private final T board;
 

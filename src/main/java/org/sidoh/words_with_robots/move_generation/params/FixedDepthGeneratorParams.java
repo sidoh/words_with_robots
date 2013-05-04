@@ -20,18 +20,34 @@ public class FixedDepthGeneratorParams extends WwfMoveGeneratorParams {
     public static final int MOVE_CACHE_SIZE = 0;
     public static final int MIN_SCORE = 3;
     public static final int BRANCHING_FACTOR_LIMIT = 20;
-    public static final PreemptionContext PREEMPTION_CONTEXT = null;
+    public static final PreemptionContext PREEMPTION_CONTEXT = new PreemptionContext();
     public static final SwapStrategy SWAP_STRATEGY = new MinScoreThresholdSwapStrategy();
     public static final int MAX_DEPTH = 2;
   }
 
   public static class Builder extends AbstractBuilder<FixedDepthGeneratorParams, Builder> {
-    private int maxDepth = DefaultValues.MAX_DEPTH;
-    private int moveCacheSize = DefaultValues.MOVE_CACHE_SIZE;
-    private int minScore = DefaultValues.MIN_SCORE;
-    private int branchingFactorLimit = DefaultValues.BRANCHING_FACTOR_LIMIT;
-    private PreemptionContext preemptionContext = DefaultValues.PREEMPTION_CONTEXT;
-    private SwapStrategy swapStrategy = DefaultValues.SWAP_STRATEGY;
+    protected int maxDepth = DefaultValues.MAX_DEPTH;
+    protected int moveCacheSize = DefaultValues.MOVE_CACHE_SIZE;
+    protected int minScore = DefaultValues.MIN_SCORE;
+    protected int branchingFactorLimit = DefaultValues.BRANCHING_FACTOR_LIMIT;
+    protected PreemptionContext preemptionContext = DefaultValues.PREEMPTION_CONTEXT;
+    protected SwapStrategy swapStrategy = DefaultValues.SWAP_STRATEGY;
+
+    public FixedDepthGeneratorParams.Builder clone() {
+      FixedDepthGeneratorParams.Builder builder = new FixedDepthGeneratorParams.Builder();
+      builder.maxDepth = maxDepth;
+      builder.moveCacheSize = moveCacheSize;
+      builder.minScore = minScore;
+      builder.branchingFactorLimit = branchingFactorLimit;
+      builder.preemptionContext = preemptionContext;
+      builder.swapStrategy = swapStrategy;
+      return builder;
+    }
+
+    @Override
+    protected FixedDepthGeneratorParams build(Rack rack, WordsWithFriendsBoard board) {
+      throw new UnsupportedOperationException();
+    }
 
     @Override
     public FixedDepthGeneratorParams build(GameState state) {
