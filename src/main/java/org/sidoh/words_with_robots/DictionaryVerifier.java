@@ -1,7 +1,6 @@
 package org.sidoh.words_with_robots;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.sidoh.words_with_robots.util.dictionary.DictionaryHelper;
 import org.sidoh.wwf_api.StatefulApiProvider;
 import org.slf4j.Logger;
@@ -15,7 +14,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class DictionaryVerifier {
   private static final Logger LOG = LoggerFactory.getLogger(DictionaryVerifier.class);

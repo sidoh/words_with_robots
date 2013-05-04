@@ -1,7 +1,5 @@
 package org.sidoh.words_with_robots.data_structures;
 
-import org.apache.commons.lang.BitField;
-
 /**
  * A very memory-efficient implementation of LetterSet. Supports only A-Z and ignores case.
  */

@@ -1,12 +1,6 @@
 package org.sidoh.words_with_robots.data_structures.gaddag;
 
-import org.apache.commons.lang.BitField;
 import org.sidoh.words_with_robots.data_structures.LetterSet;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 public final class GadDagEdge extends IntrusiveEdge {
   private final LetterSet wordLetters;

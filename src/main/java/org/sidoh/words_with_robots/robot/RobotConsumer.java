@@ -3,7 +3,6 @@ package org.sidoh.words_with_robots.robot;
 import com.google.common.collect.Maps;
 import org.apache.thrift.TException;
 import org.sidoh.words_with_robots.move_generation.WordsWithFriendsMoveGenerator;
-import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParams;
 import org.sidoh.words_with_robots.util.io.StatePrinter;
 import org.sidoh.wwf_api.MoveValidationException;

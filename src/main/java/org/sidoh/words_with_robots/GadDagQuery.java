@@ -1,7 +1,7 @@
 package org.sidoh.words_with_robots;
 
-import org.sidoh.words_with_robots.util.io.StdinPrompts;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
+import org.sidoh.words_with_robots.util.io.StdinPrompts;
 
 import java.io.FileReader;
 import java.io.IOException;

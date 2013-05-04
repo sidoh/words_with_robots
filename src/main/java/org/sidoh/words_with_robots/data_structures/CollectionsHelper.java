@@ -2,7 +2,7 @@ package org.sidoh.words_with_robots.data_structures;
 
 import com.google.common.collect.Sets;
 
-import java.util.*;
+import java.util.Set;
 
 public class CollectionsHelper {
   /**

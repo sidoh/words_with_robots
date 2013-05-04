@@ -48,14 +48,25 @@ package org.sidoh.words_with_robots.data_structures.gaddag;
  *
  */
 
-import java.io.*;
-
-import java.util.*;
-
-import org.jgrapht.*;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.EdgeFactory;
+import org.jgrapht.Graph;
+import org.jgrapht.Graphs;
+import org.jgrapht.UndirectedGraph;
+import org.jgrapht.WeightedGraph;
 import org.jgrapht.graph.AbstractGraph;
 import org.jgrapht.graph.EdgeSetFactory;
-import org.jgrapht.util.*;
+import org.jgrapht.util.ArrayUnenforcedSet;
+import org.jgrapht.util.TypeUtil;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 
 /**

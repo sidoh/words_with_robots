@@ -3,7 +3,6 @@ package org.sidoh.words_with_robots.move_generation;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MinMaxPriorityQueue;
 import org.sidoh.words_with_robots.move_generation.context.FixedDepthReturnContext;
-import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
 import org.sidoh.words_with_robots.move_generation.params.FixedDepthGeneratorParams;
 import org.sidoh.words_with_robots.move_generation.util.MoveScoreComparator;
 import org.sidoh.wwf_api.game_state.GameStateHelper;
