@@ -2,9 +2,11 @@ package org.sidoh.words_with_robots.move_generation;
 
 import com.google.common.collect.Maps;
 import org.sidoh.words_with_robots.move_generation.context.FixedDepthReturnContext;
+import org.sidoh.words_with_robots.move_generation.context.NonBlockingReturnContext;
 import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
-import org.sidoh.words_with_robots.move_generation.params.FixedDepthGeneratorParams;
-import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.params.FixedDepthParams;
+import org.sidoh.words_with_robots.move_generation.params.IterativeDeepeningParams;
+import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
@@ -13,53 +15,51 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class IterativeDeepeningMoveGenerator
-  extends WordsWithFriendsMoveGenerator<IterativeDeepeningGeneratorParams,
-                                        WwfMoveGeneratorReturnContext,
-                                        IterativeDeepeningGeneratorParams.Builder> {
-
-
+public class IterativeDeepeningMoveGenerator implements GameStateMoveGenerator<WwfMoveGeneratorReturnContext> {
   private static final Logger LOG = LoggerFactory.getLogger(IterativeDeepeningMoveGenerator.class);
-  private final NonBlockingMoveGenerator<WordsWithFriendsBoard, FixedDepthGeneratorParams, FixedDepthReturnContext> fixedDepthGenerator;
-  private WordsWithFriendsMoveGenerator<?, ?, ?> allMovesGenerator;
+  private static final GameStateHelper stateHelper = GameStateHelper.getInstance();
 
-  public IterativeDeepeningMoveGenerator(WordsWithFriendsMoveGenerator<?,?,?> allMovesGenerator) {
+  private final FixedDepthMoveGenerator fixedDepthGenerator;
+  private AllMovesGenerator<WordsWithFriendsBoard> allMovesGenerator;
+  private IterativeDeepeningParams params = new IterativeDeepeningParams();
+
+  public IterativeDeepeningMoveGenerator(AllMovesGenerator<WordsWithFriendsBoard> allMovesGenerator) {
     this.allMovesGenerator = allMovesGenerator;
-    this.fixedDepthGenerator = MoveGenerators.asNonBlockingGenerator(new FixedDepthMoveGenerator(allMovesGenerator));
+    this.fixedDepthGenerator = new FixedDepthMoveGenerator(allMovesGenerator);
   }
 
   @Override
-  public WwfMoveGeneratorReturnContext generateMove(IterativeDeepeningGeneratorParams params) {
+  public WwfMoveGeneratorReturnContext generateMove(GameState state) {
     LOG.info("Generating move. Starting at depth 2");
-    boolean verboseStats = params.isVerboseStats();
-    GameState state = params.getGameState();
+    boolean verboseStats = params.isVerboseStatsEnabled();
+    long maxExecutionTime = params.getMaxExecutionTime();
     Map<String, Object> stats = Maps.newHashMap();
-    Rack rack = params.getRack();
-    WordsWithFriendsBoard board = params.getBoard();
+
+    // Reconstruct some smaller parts of the state from the full game state
+    Rack rack = stateHelper.getCurrentPlayerRack(state);
+    WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
     // Figure out how long we're allowed to run
     long startTime = System.currentTimeMillis();
-    long expireTime = System.currentTimeMillis() + params.getMaxExecutionTime();
+    long expireTime = System.currentTimeMillis() + maxExecutionTime;
 
     // Set up and start a producer thread
     Move bestMove = null;
     int currentDepth = 2;
-    FixedDepthGeneratorParams.Builder paramsBuilder = params.getFixedDepthParamsBuilder();
 
-    while ( bestMove == null || !isExpired(startTime, params)) {
+    while ( bestMove == null || !isExpired(startTime, maxExecutionTime)) {
       long timeRemaining = expireTime - System.currentTimeMillis();
 
-      FixedDepthGeneratorParams childParams = paramsBuilder
-        .setMaxDepth(currentDepth)
-        .build(state);
-      Future<FixedDepthReturnContext> future = fixedDepthGenerator
-        .generateMove(childParams)
+      FixedDepthMoveGenerator clone = fixedDepthGenerator
+        .deepCopy()
+        .updateParam(FixedDepthParams._Fields.MAX_DEPTH, currentDepth);
+      Future<FixedDepthReturnContext> future = MoveGenerators.asNonBlockingGenerator(clone)
+        .generateMove(state)
         .getFuture();
       FixedDepthReturnContext answer;
 
@@ -118,7 +118,7 @@ public class IterativeDeepeningMoveGenerator
    * @return
    */
   protected int findMoveRank(Rack rack, WordsWithFriendsBoard board, Move move) {
-    return getMoveScoreRank(allMovesGenerator.generateAllPossibleMoves(rack, board), move);
+    return allMovesGenerator.getMoveScoreRank(allMovesGenerator.generateAllMoves(rack, board), move);
   }
 
   /**
@@ -133,38 +133,17 @@ public class IterativeDeepeningMoveGenerator
   /**
    * Determine whether or not execution is expired
    *
-   *
    * @param startTime time at which execution began
-   * @param params params called
+   * @param maxExecutionTime max number of millis to allow execution
    * @return
    */
-  protected static boolean isExpired(long startTime, IterativeDeepeningGeneratorParams params) {
+  protected static boolean isExpired(long startTime, long maxExecutionTime) {
     // Otherwise, if we've been interrupted, stop immediately
     if ( Thread.currentThread().isInterrupted() ) {
       return true;
     }
 
     // Lastly, expire if we're out of time
-    return System.currentTimeMillis() >= startTime + params.getMaxExecutionTime();
-  }
-
-  @Override
-  protected Set<Move> generateMoves(int row, int col, Rack rack, WordsWithFriendsBoard board) {
-    return allMovesGenerator.generateMoves(row, col, rack, board);
-  }
-
-  @Override
-  protected boolean isWord(String word) {
-    return allMovesGenerator.isWord(word);
-  }
-
-  @Override
-  protected WwfMoveGeneratorReturnContext createReturnContext(Move move) {
-    return allMovesGenerator.createReturnContext(move);
-  }
-
-  @Override
-  public IterativeDeepeningGeneratorParams.Builder getParamsBuilder() {
-    return new IterativeDeepeningGeneratorParams.Builder();
+    return System.currentTimeMillis() >= startTime + maxExecutionTime;
   }
 }

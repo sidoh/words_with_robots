@@ -2,14 +2,9 @@ package org.sidoh.words_with_robots.move_generation;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
-import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
-import org.sidoh.words_with_robots.move_generation.params.AbstractParamsBuilder;
-import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParams;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.TileBuilder;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
-import org.sidoh.wwf_api.types.api.GameState;
 import org.sidoh.wwf_api.types.api.MoveType;
 import org.sidoh.wwf_api.types.game_state.Letter;
 import org.sidoh.wwf_api.types.game_state.Rack;
@@ -27,41 +22,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-public abstract class WordsWithFriendsMoveGenerator<P extends WwfMoveGeneratorParams,
-                                                    R extends WwfMoveGeneratorReturnContext,
-                                                    B extends AbstractParamsBuilder<P, B>>
-  implements MoveGenerator<WordsWithFriendsBoard, P, R> {
-
-  private static final Logger LOG = LoggerFactory.getLogger(WordsWithFriendsMoveGenerator.class);
-
-  @Override
-  public R generateMove(P params) {
-    WordsWithFriendsBoard board = params.getBoard();
-    Rack baseRack = params.getRack();
-    EvaluationFunction evalFn = params.getEvaluationFunction();
-    GameState state = params.getGameState();
-    Move bestMove = null;
-    double bestScore = 0;
-
-    for (Move move : generateAllPossibleMoves(baseRack, board)) {
-      double score = evalFn.score(move, state);
-
-      if ( bestMove == null || score > bestScore ) {
-        LOG.info("Found new best move worth {} points: {}", move.getResult().getScore(), move.getResult().getResultingWords());
-
-        bestMove = move;
-        bestScore = score;
-      }
-    }
-
-    // Pass if a move wasn't generated
-    if ( bestMove == null ) {
-      return createReturnContext(Move.pass());
-    }
-    else {
-      return createReturnContext(bestMove);
-    }
-  }
+public abstract class WordsWithFriendsAllMovesGenerator implements AllMovesGenerator<WordsWithFriendsBoard> {
+  private static final Logger LOG = LoggerFactory.getLogger(WordsWithFriendsAllMovesGenerator.class);
 
   /**
    * Generates all possible moves for a given board and rack
@@ -70,7 +32,7 @@ public abstract class WordsWithFriendsMoveGenerator<P extends WwfMoveGeneratorPa
    * @param board
    * @return
    */
-  public Iterable<Move> generateAllPossibleMoves(final Rack baseRack, final WordsWithFriendsBoard board) {
+  public Iterable<Move> generateAllMoves(final Rack baseRack, final WordsWithFriendsBoard board) {
     // If there have been no moves, then only valid to play on (7, 7).
     if ( ! board.hasTiles() ) {
       Set<Move> possibleMoves = new HashSet<Move>();
@@ -97,12 +59,13 @@ public abstract class WordsWithFriendsMoveGenerator<P extends WwfMoveGeneratorPa
   }
 
   /**
-   * Returns the rank of the provided move in relation to a list of all moves.
+   * Returns the ankk of the provided move in relation to a list of all moves.
    *
    * @param allMoves all moves possible
    * @param move the move in question
    * @return
    */
+  @Override
   public int getMoveScoreRank(Iterable<Move> allMoves, Move move) {
     if ( move == null || move.getMoveType() != MoveType.PLAY ) {
       return -1;
@@ -129,8 +92,13 @@ public abstract class WordsWithFriendsMoveGenerator<P extends WwfMoveGeneratorPa
    * @param move
    * @return true if and only if the provided move results only in valid words
    */
-  protected boolean isValidMove(Move.Result move) {
-    for (String word : move.getResultingWords()) {
+  @Override
+  public boolean isValidMove(WordsWithFriendsBoard board, Move move) {
+    if (move.getResult() == null) {
+      board.scoreMove(move);
+    }
+
+    for (String word : move.getResult().getResultingWords()) {
       if ( ! isWord(word) )
         return false;
     }
@@ -203,6 +171,7 @@ public abstract class WordsWithFriendsMoveGenerator<P extends WwfMoveGeneratorPa
 
   /**
    * sloppy and quick x  2
+   *
    * @param baseRack
    * @param choices
    * @param blank1
@@ -242,19 +211,6 @@ public abstract class WordsWithFriendsMoveGenerator<P extends WwfMoveGeneratorPa
    * @return true if the provided word is valid for the game
    */
   protected abstract boolean isWord(String word);
-
-  /**
-   *
-   * @param move
-   * @return
-   */
-  protected abstract R createReturnContext(Move move);
-
-  /**
-   *
-   * @return an instance of the parameters builder for this move generator
-   */
-  public abstract B getParamsBuilder();
 
   /**
    * Rather than sticking all possible moves into memory, this allows the consumer to iterate over possible moves.
@@ -343,7 +299,7 @@ public abstract class WordsWithFriendsMoveGenerator<P extends WwfMoveGeneratorPa
           // Score the move to generate the result
           board.scoreMove(possibleMove);
 
-          if ( isValidMove(possibleMove.getResult()) ) {
+          if ( isValidMove(board, possibleMove) ) {
             mergedMoves.add(possibleMove);
           }
         }

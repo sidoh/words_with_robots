@@ -6,12 +6,13 @@ import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
 import org.sidoh.words_with_robots.move_generation.GadDagWwfMoveGenerator;
+import org.sidoh.words_with_robots.move_generation.GameStateMoveGenerator;
 import org.sidoh.words_with_robots.move_generation.IterativeDeepeningMoveGenerator;
-import org.sidoh.words_with_robots.move_generation.WordsWithFriendsMoveGenerator;
+import org.sidoh.words_with_robots.move_generation.WordsWithFriendsAllMovesGenerator;
+import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
 import org.sidoh.words_with_robots.move_generation.eval.EvaluationFunction;
 import org.sidoh.words_with_robots.move_generation.eval.ScoreEvalFunction;
 import org.sidoh.words_with_robots.move_generation.eval.SummingEvalFunction;
-import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParams;
 import org.sidoh.words_with_robots.util.io.StatePrinter;
 import org.sidoh.words_with_robots.util.io.StdinPrompts;
 import org.sidoh.wwf_api.AccessTokenRetriever;
@@ -45,9 +46,9 @@ import java.util.zip.GZIPInputStream;
 public class WwfConsole {
   static String authToken;
   static final GadDag gaddag = new GadDag();
-  static final WordsWithFriendsMoveGenerator allMovesGen
+  static final WordsWithFriendsAllMovesGenerator allMovesGen
     = new GadDagWwfMoveGenerator(gaddag);
-  static WordsWithFriendsMoveGenerator generator
+  static GameStateMoveGenerator<? extends WwfMoveGeneratorReturnContext> generator
     = new IterativeDeepeningMoveGenerator(allMovesGen);
   static StatefulApiProvider api;
   static final GameStateHelper stateHelper = GameStateHelper.getInstance();
@@ -76,12 +77,7 @@ public class WwfConsole {
 //          , new NewTilesEvalFunction()
         );
 
-        WwfMoveGeneratorParams params = generator
-          .getParamsBuilder()
-          .setEvaluationFunction(defaultEvalFunction)
-          .build(state);
-
-        bestMove = generator.generateMove(params).getMove();
+        bestMove = generator.generateMove(state).getMove();
 
         if (bestMove == null) {
           System.out.println("No moves possible!");
@@ -217,8 +213,8 @@ public class WwfConsole {
     else if ("setMoveGenAlgo".equals(command)) {
       String algorithm = StdinPrompts.promptForLine("Enter class name");
       String algoClass = String.format("org.sidoh.words_with_robots.move_generation.%s", algorithm);
-      Constructor constructor = Class.forName(algoClass).getConstructor(WordsWithFriendsMoveGenerator.class);
-      generator = (WordsWithFriendsMoveGenerator) constructor.newInstance(allMovesGen);
+      Constructor constructor = Class.forName(algoClass).getConstructor(WordsWithFriendsAllMovesGenerator.class);
+      generator = (GameStateMoveGenerator<? extends WwfMoveGeneratorReturnContext>) constructor.newInstance(allMovesGen);
     }
     else if ("dictLookup".equals(command)) {
       String[] words = StdinPrompts.promptForLine("Enter words (separated by commas)").split(",");

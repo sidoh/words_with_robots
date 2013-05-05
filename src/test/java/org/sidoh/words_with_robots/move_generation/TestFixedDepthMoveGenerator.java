@@ -3,7 +3,6 @@ package org.sidoh.words_with_robots.move_generation;
 import org.apache.thrift.TException;
 import org.sidoh.words_with_robots.WordsWithRobotsTestCase;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
-import org.sidoh.words_with_robots.move_generation.params.FixedDepthGeneratorParams;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
 import org.sidoh.wwf_api.types.api.GameState;
@@ -13,16 +12,13 @@ import org.sidoh.wwf_api.types.game_state.WordOrientation;
 import java.io.IOException;
 
 public class TestFixedDepthMoveGenerator extends WordsWithRobotsTestCase {
-  public static final FixedDepthGeneratorParams.Builder paramsBuilder
-    = new FixedDepthGeneratorParams.Builder();
-
   public void testItsDaMan() throws IOException, TException {
     GameState state = loadGameState("TestFixedDepthMoveGenerator.testItsdaman.bin");
 
     // Make sure that a lower scoring move is chosen if it means the score differential is
     // better
     GadDag dict = buildGadDag( "BT", "UT", "TUB", "TABARETS" );
-    WordsWithFriendsMoveGenerator allMovesGenerator = new GadDagWwfMoveGenerator(dict);
+    WordsWithFriendsAllMovesGenerator allMovesGenerator = new GadDagWwfMoveGenerator(dict);
     FixedDepthMoveGenerator moveGenerator = new FixedDepthMoveGenerator(allMovesGenerator);
     WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
@@ -39,7 +35,7 @@ public class TestFixedDepthMoveGenerator extends WordsWithRobotsTestCase {
     // Pretend it's our turn again
     state.getMeta().setCurrentMoveUserId(stateHelper.getOtherUser(state.getMeta().getCurrentMoveUserId(), state).getId());
 
-    Move move = moveGenerator.generateMove(paramsBuilder.build(state)).getMove();
+    Move move = moveGenerator.generateMove(state).getMove();
     board.move(move);
 
     // Here, the move should be 'TUB' on the B in 'BIGOT'. This is a lower scoring move than

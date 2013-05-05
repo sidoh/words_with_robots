@@ -2,8 +2,9 @@ package org.sidoh.words_with_robots.robot;
 
 import com.google.common.collect.Maps;
 import org.apache.thrift.TException;
-import org.sidoh.words_with_robots.move_generation.WordsWithFriendsMoveGenerator;
-import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParams;
+import org.sidoh.words_with_robots.move_generation.GameStateMoveGenerator;
+import org.sidoh.words_with_robots.move_generation.WordsWithFriendsAllMovesGenerator;
+import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
 import org.sidoh.words_with_robots.util.io.StatePrinter;
 import org.sidoh.wwf_api.MoveValidationException;
 import org.sidoh.wwf_api.StatefulApiProvider;
@@ -56,8 +57,8 @@ class RobotConsumer implements Runnable {
    *
    * @return
    */
-  protected WordsWithFriendsMoveGenerator getMoveGenerator() {
-    return (WordsWithFriendsMoveGenerator) settings.get(RobotSettingKey.MOVE_GENERATOR);
+  protected GameStateMoveGenerator<? extends WwfMoveGeneratorReturnContext> getMoveGenerator() {
+    return (GameStateMoveGenerator<? extends WwfMoveGeneratorReturnContext>) settings.get(RobotSettingKey.MOVE_GENERATOR);
   }
 
   /**
@@ -118,14 +119,9 @@ class RobotConsumer implements Runnable {
           Rack rack = stateHelper.getCurrentPlayerRack(state);
           WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
 
-          // Generate a move
-          WwfMoveGeneratorParams params = getMoveGenerator()
-              .getParamsBuilder()
-              .build(state);
-
           Move generatedMove = moveCache.containsKey(state.getId())
             ? moveCache.get(state.getId())
-            : getMoveGenerator().generateMove(params).getMove();
+            : getMoveGenerator().generateMove(state).getMove();
           moveCache.put(state.getId(), generatedMove);
 
           // Submit the generated move

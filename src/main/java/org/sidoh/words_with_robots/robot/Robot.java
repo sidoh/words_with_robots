@@ -3,8 +3,10 @@ package org.sidoh.words_with_robots.robot;
 import com.google.common.collect.Lists;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
 import org.sidoh.words_with_robots.move_generation.GadDagWwfMoveGenerator;
+import org.sidoh.words_with_robots.move_generation.GameStateMoveGenerator;
 import org.sidoh.words_with_robots.move_generation.IterativeDeepeningMoveGenerator;
-import org.sidoh.words_with_robots.move_generation.WordsWithFriendsMoveGenerator;
+import org.sidoh.words_with_robots.move_generation.WordsWithFriendsAllMovesGenerator;
+import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
 import org.sidoh.words_with_robots.util.dictionary.DictionaryHelper;
 import org.sidoh.wwf_api.AccessTokenRetriever;
 import org.sidoh.wwf_api.StatefulApiProvider;
@@ -29,7 +31,7 @@ public class Robot {
   protected final static GameStateHelper stateHelper = GameStateHelper.getInstance();
 
   private GadDag dictionary;
-  private WordsWithFriendsMoveGenerator moveGenerator;
+  private GameStateMoveGenerator<? extends WwfMoveGeneratorReturnContext> moveGenerator;
   private ExecutorService threadPool;
   private StatefulApiProvider apiProvider;
   private RobotSettings settings;
@@ -57,7 +59,7 @@ public class Robot {
    *
    * @return the move generator being used by this robot
    */
-  public synchronized WordsWithFriendsMoveGenerator getMoveGenerator() {
+  public synchronized GameStateMoveGenerator<? extends WwfMoveGeneratorReturnContext> getMoveGenerator() {
     if ( this.moveGenerator == null ) {
       try {
         LOG.info("Loading dictionary....");

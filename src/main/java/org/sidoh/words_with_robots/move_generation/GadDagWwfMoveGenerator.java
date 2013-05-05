@@ -4,11 +4,12 @@ import org.sidoh.words_with_robots.data_structures.CollectionsHelper;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDagEdge;
 import org.sidoh.words_with_robots.move_generation.context.WwfMoveGeneratorReturnContext;
-import org.sidoh.words_with_robots.move_generation.params.WwfMoveGeneratorParams;
 import org.sidoh.wwf_api.game_state.Direction;
+import org.sidoh.wwf_api.game_state.GameStateHelper;
 import org.sidoh.wwf_api.game_state.Move;
 import org.sidoh.wwf_api.game_state.SlotIterator;
 import org.sidoh.wwf_api.game_state.WordsWithFriendsBoard;
+import org.sidoh.wwf_api.types.api.GameState;
 import org.sidoh.wwf_api.types.game_state.Rack;
 import org.sidoh.wwf_api.types.game_state.Slot;
 import org.sidoh.wwf_api.types.game_state.Tile;
@@ -21,7 +22,12 @@ import java.util.Set;
 /**
  * A move generator that uses a GADDAG.
  */
-public class GadDagWwfMoveGenerator extends WordsWithFriendsMoveGenerator<WwfMoveGeneratorParams, WwfMoveGeneratorReturnContext, WwfMoveGeneratorParams.Builder> {
+public class GadDagWwfMoveGenerator extends WordsWithFriendsAllMovesGenerator
+  implements MoveGenerator<WordsWithFriendsBoard, WwfMoveGeneratorReturnContext>,
+             GameStateMoveGenerator<WwfMoveGeneratorReturnContext> {
+
+  private static final GameStateHelper stateHelper = GameStateHelper.getInstance();
+
   private final GadDag gaddag;
 
   public GadDagWwfMoveGenerator(GadDag gaddag) {
@@ -47,16 +53,6 @@ public class GadDagWwfMoveGenerator extends WordsWithFriendsMoveGenerator<WwfMov
   @Override
   protected boolean isWord(String word) {
     return gaddag.isWord(word);
-  }
-
-  @Override
-  protected WwfMoveGeneratorReturnContext createReturnContext(Move move) {
-    return new WwfMoveGeneratorReturnContext(move);
-  }
-
-  @Override
-  public WwfMoveGeneratorParams.Builder getParamsBuilder() {
-    return new WwfMoveGeneratorParams.Builder();
   }
 
   private void gen(WordsWithFriendsBoard board, SlotIterator.Iterator itr, String word, Set<Tile> tiles, GadDagEdge edge, Move move, Set<Move> moves) {
@@ -142,5 +138,28 @@ public class GadDagWwfMoveGenerator extends WordsWithFriendsMoveGenerator<WwfMov
         gen(board, rItr, word, tiles, newEdge, move, moves);
       }
     }
+  }
+
+  @Override
+  public WwfMoveGeneratorReturnContext generateMove(Rack rack, WordsWithFriendsBoard board) {
+    Move bestMove = null;
+
+    for (Move move : generateAllMoves(rack, board)) {
+      board.scoreMove(move);
+
+      if ( bestMove == null || move.getResult().getScore() > bestMove.getResult().getScore() ) {
+        bestMove = move;
+      }
+    }
+
+    return new WwfMoveGeneratorReturnContext(bestMove);
+  }
+
+  @Override
+  public WwfMoveGeneratorReturnContext generateMove(GameState state) {
+    Rack rack = stateHelper.getCurrentPlayerRack(state);
+    WordsWithFriendsBoard board = stateHelper.createBoardFromState(state);
+
+    return generateMove(rack, board);
   }
 }
