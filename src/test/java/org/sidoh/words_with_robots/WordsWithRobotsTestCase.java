@@ -16,6 +16,7 @@ import org.sidoh.wwf_api.types.game_state.Rack;
 import org.sidoh.wwf_api.types.game_state.Tile;
 import org.sidoh.wwf_api.types.game_state.WordOrientation;
 import org.sidoh.wwf_api.util.ThriftSerializationHelper;
+import sun.jvm.hotspot.runtime.Threads;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,8 +24,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
-public class WordsWithRobotsTestCase extends TestCase {
+import static junit.framework.Assert.assertEquals;
+
+public class WordsWithRobotsTestCase {
   private static int tileId = 0;
 
   protected static final GameStateHelper stateHelper = GameStateHelper.getInstance();
@@ -187,5 +191,22 @@ public class WordsWithRobotsTestCase extends TestCase {
     }
 
     return board;
+  }
+
+  public static Set<Thread> getAllActiveThreads() {
+    return Thread.getAllStackTraces().keySet();
+  }
+
+  public static List<String> getAllActiveThreadNames() {
+    Set<Thread> threads = getAllActiveThreads();
+    List<String> names = Lists.newArrayListWithCapacity(threads.size());
+
+    for (Thread thread : threads) {
+      if (thread.isAlive()) {
+        names.add(thread.getName());
+      }
+    }
+
+    return names;
   }
 }

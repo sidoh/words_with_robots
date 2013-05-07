@@ -11,6 +11,9 @@ import org.sidoh.wwf_api.types.game_state.WordOrientation;
 
 import java.io.IOException;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+
 public class TestFixedDepthMoveGenerator extends WordsWithRobotsTestCase {
   public void testItsDaMan() throws IOException, TException {
     GameState state = loadGameState("TestFixedDepthMoveGenerator.testItsdaman.bin");

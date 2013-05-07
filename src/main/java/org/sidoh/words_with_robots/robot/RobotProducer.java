@@ -12,6 +12,7 @@ import org.sidoh.wwf_api.types.api.GameIndex;
 import org.sidoh.wwf_api.types.api.GameMeta;
 import org.sidoh.wwf_api.types.api.GameState;
 import org.sidoh.wwf_api.types.api.MoveType;
+import org.sidoh.wwf_api.types.api.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +37,7 @@ class RobotProducer implements Runnable {
   private int lastUpdate;
   private final RobotSettings settings;
   private final StatefulApiProvider apiProvider;
+  private User username;
 
   public RobotProducer(RobotSettings settings, StatefulApiProvider apiProvider) {
     this.settings = settings;
@@ -81,6 +83,10 @@ class RobotProducer implements Runnable {
     activeGames.remove(state.getId());
   }
 
+  public User getUser() {
+    return username;
+  }
+
   /**
    *
    * @return
@@ -111,6 +117,9 @@ class RobotProducer implements Runnable {
             LOG.error("Error requesting game index", e);
             continue;
           }
+
+          // Set username of the user who requested the index
+          username = index.getUser();
 
           int numActiveGames = 0;
           for (GameMeta gameMeta : index.getGames()) {

@@ -11,6 +11,10 @@ import org.sidoh.wwf_api.types.api.User;
 import org.sidoh.wwf_api.types.game_state.Rack;
 import org.sidoh.wwf_api.types.game_state.WordOrientation;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+
 public class TestGadDagWwfMoveGenerator extends WordsWithRobotsTestCase {
   /**
    *

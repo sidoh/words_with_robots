@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import org.apache.thrift.TException;
 import org.sidoh.words_with_robots.data_structures.CountingHashMap;
 import org.sidoh.words_with_robots.data_structures.gaddag.GadDag;
+import org.sidoh.words_with_robots.move_generation.AllMovesGenerator;
 import org.sidoh.words_with_robots.move_generation.GadDagWwfMoveGenerator;
 import org.sidoh.words_with_robots.util.dictionary.DictionaryHelper;
 import org.sidoh.words_with_robots.util.io.StdinPrompts;
@@ -34,7 +35,7 @@ import java.util.Map;
 public class StatsCollector {
   private static final Logger LOG = LoggerFactory.getLogger(StatsCollector.class);
   private static final GameStateHelper stateHelper = GameStateHelper.getInstance();
-  private GadDagWwfMoveGenerator moveGenerator;
+  private AllMovesGenerator<WordsWithFriendsBoard> moveGenerator;
 
   public StatsCollector() throws IOException {
     GadDag dictionary = new GadDag();
@@ -126,7 +127,7 @@ public class StatsCollector {
         board.scoreMove(move);
 
         List<Tile> rack = racks.get(currentUser.getId());
-        Iterable<Move> allMoves = moveGenerator.generateAllPossibleMoves(new Rack().setTiles(rack), board);
+        Iterable<Move> allMoves = moveGenerator.generateAllMoves(new Rack().setTiles(rack), board);
 
         int moveRank =  moveGenerator.getMoveScoreRank(allMoves, move);
 

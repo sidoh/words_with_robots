@@ -5,12 +5,18 @@ import org.sidoh.words_with_robots.move_generation.context.NonBlockingReturnCont
 import org.sidoh.wwf_api.game_state.Board;
 import org.sidoh.wwf_api.types.api.GameState;
 import org.sidoh.wwf_api.types.game_state.Rack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class MoveGenerators {
+  public static final String NON_BLOCKING_GEN_THREAD_NAME = "non-blocking generator";
+  private static final Logger LOG = LoggerFactory.getLogger(MoveGenerators.class);
+
   /**
    * Wraps the provided move generator in a non-blocking move generator.
    *
@@ -25,12 +31,18 @@ public class MoveGenerators {
     return new MoveGenerator<T, NonBlockingReturnContext<R>>() {
       @Override
       public NonBlockingReturnContext<R> generateMove(final Rack rack, final T board) {
-        Future<R> future = Executors.newSingleThreadExecutor().submit(new Callable<R>() {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        Future<R> future = executor.submit(new Callable<R>() {
           @Override
           public R call() throws Exception {
-            return generator.generateMove(rack, board);
+            Thread.currentThread().setName(NON_BLOCKING_GEN_THREAD_NAME);
+            R result = generator.generateMove(rack, board);
+            return result;
           }
         });
+
+        executor.shutdown();
         return new NonBlockingReturnContext<R>(future);
       }
     };
@@ -49,12 +61,17 @@ public class MoveGenerators {
     return new GameStateMoveGenerator<NonBlockingReturnContext<R>>() {
       @Override
       public NonBlockingReturnContext<R> generateMove(final GameState state) {
-        Future<R> future = Executors.newSingleThreadExecutor().submit(new Callable<R>() {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        Future<R> future = executor.submit(new Callable<R>() {
           @Override
           public R call() throws Exception {
+            Thread.currentThread().setName(NON_BLOCKING_GEN_THREAD_NAME);
             return generator.generateMove(state);
           }
         });
+
+        executor.shutdown();
         return new NonBlockingReturnContext<R>(future);
       }
     };

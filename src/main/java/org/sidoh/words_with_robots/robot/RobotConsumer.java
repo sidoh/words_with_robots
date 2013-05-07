@@ -111,6 +111,12 @@ class RobotConsumer implements Runnable {
       try {
         // Wait for a state to be available in the queue
         GameState state = producer.takeGame();
+        Thread.currentThread().setName(String.format("%s - %s vs. %s, gameid = %d",
+          this.getClass().getSimpleName(),
+          producer.getUser().getName(),
+          stateHelper.getOtherUser(producer.getUser(), state).getName(),
+          state.getMeta().getId()));
+
         serializeGameState(state);
         sendCourtesyChat(state);
 
