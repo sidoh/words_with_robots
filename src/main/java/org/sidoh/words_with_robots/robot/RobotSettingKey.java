@@ -52,7 +52,7 @@ public enum RobotSettingKey {
    * If true, send courtesy messages to opponents at the beginning of a game warning them that they're
    * playing against a bot
    */
-  SEND_COURTESY_MESSAGES(true),
+  SEND_COURTESY_MESSAGES(false),
 
   /**
    * Message sent to new players if enabled

@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -132,10 +133,16 @@ class RobotConsumer implements Runnable {
 
           // Submit the generated move
           try {
-            GameState updatedState = apiProvider.makeMove(state, stateHelper.createMoveSubmissionFromPlay(generatedMove));
-            moveCache.remove(state.getId());
+            List<String> wordsNotInDictionary = apiProvider.dictionaryLookup(generatedMove.getResult().getResultingWords());
 
-            LOG.info("Game state after move:\n{}", statePrinter.getGameStateAsString(updatedState));
+            if (wordsNotInDictionary.isEmpty()) {
+              GameState updatedState = apiProvider.makeMove(state, stateHelper.createMoveSubmissionFromPlay(generatedMove));
+              moveCache.remove(state.getId());
+
+              LOG.info("Game state after move:\n{}", statePrinter.getGameStateAsString(updatedState));
+            } else {
+              throw new RuntimeException("The following aren't considered words by WWF: " + wordsNotInDictionary);
+            }
           }
           catch (MoveValidationException e) {
             LOG.error("Permanent error submitting move -- generated move was invalid", e);
