@@ -24,7 +24,7 @@ public enum RobotSettingKey {
    * The number of seconds to wait before expiring a game to make room for a new one. This can be
    * set to 0 to disable it.
    */
-  INACTIVE_GAME_TTL(43200),
+  INACTIVE_GAME_TTL(0),
 
   /**
    * Number of concurrent active games before consumers are weakly preempted, allowing them to run
