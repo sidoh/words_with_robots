@@ -16,7 +16,6 @@ import org.sidoh.wwf_api.types.game_state.Rack;
 import org.sidoh.wwf_api.types.game_state.Tile;
 import org.sidoh.wwf_api.types.game_state.WordOrientation;
 import org.sidoh.wwf_api.util.ThriftSerializationHelper;
-import sun.jvm.hotspot.runtime.Threads;
 
 import java.io.BufferedReader;
 import java.io.File;
